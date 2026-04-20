@@ -1,0 +1,27 @@
+syntax = "proto3";
+package helixgitpx.org.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service OrgService {
+  rpc Create(CreateOrgRequest) returns (Org);
+  rpc Get(GetOrgRequest) returns (Org);
+  rpc List(ListOrgsRequest) returns (ListOrgsResponse);
+  rpc Update(UpdateOrgRequest) returns (Org);
+  rpc Delete(DeleteOrgRequest) returns (google.protobuf.Empty);
+}
+
+message Org {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message CreateOrgRequest { string slug = 1; string name = 2; }
+message GetOrgRequest    { string slug = 1; }
+message UpdateOrgRequest { string slug = 1; string name = 2; }
+message DeleteOrgRequest { string slug = 1; }
+message ListOrgsRequest  {}
+message ListOrgsResponse { repeated Org orgs = 1; }

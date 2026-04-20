@@ -1,9 +1,14 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "helixgitpx/auth/v1/stubs.proto",
+    "title": "helixgitpx/org/v1/org.proto",
     "version": "version not set"
   },
+  "tags": [
+    {
+      "name": "OrgService"
+    }
+  ],
   "consumes": [
     "application/json"
   ],

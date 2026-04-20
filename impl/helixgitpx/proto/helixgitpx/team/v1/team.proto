@@ -1,0 +1,60 @@
+syntax = "proto3";
+package helixgitpx.team.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service TeamService {
+  rpc Create(CreateTeamRequest) returns (Team);
+  rpc Get(GetTeamRequest) returns (Team);
+  rpc List(ListTeamsRequest) returns (ListTeamsResponse);
+  rpc Update(UpdateTeamRequest) returns (Team);
+  rpc Delete(DeleteTeamRequest) returns (google.protobuf.Empty);
+  rpc AddMember(AddMemberRequest) returns (Membership);
+  rpc RemoveMember(RemoveMemberRequest) returns (google.protobuf.Empty);
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (Membership);
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+}
+
+message Team {
+  string id = 1;
+  string org_id = 2;
+  string parent_id = 3;
+  string slug = 4;
+  string name = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_VIEWER = 1;
+  ROLE_MEMBER = 2;
+  ROLE_ADMIN = 3;
+  ROLE_OWNER = 4;
+}
+
+message Membership {
+  string id = 1;
+  string team_id = 2;
+  string user_id = 3;
+  Role role = 4;
+  google.protobuf.Timestamp added_at = 5;
+}
+
+message CreateTeamRequest {
+  string org_id = 1;
+  string parent_id = 2;
+  string slug = 3;
+  string name = 4;
+}
+message GetTeamRequest    { string id = 1; }
+message UpdateTeamRequest { string id = 1; string name = 2; string parent_id = 3; }
+message DeleteTeamRequest { string id = 1; }
+message ListTeamsRequest  { string org_id = 1; string under_parent_id = 2; }
+message ListTeamsResponse { repeated Team teams = 1; }
+
+message AddMemberRequest        { string team_id = 1; string user_id = 2; Role role = 3; }
+message RemoveMemberRequest     { string team_id = 1; string user_id = 2; }
+message UpdateMemberRoleRequest { string team_id = 1; string user_id = 2; Role role = 3; }
+message ListMembersRequest      { string team_id = 1; }
+message ListMembersResponse     { repeated Membership memberships = 1; }
