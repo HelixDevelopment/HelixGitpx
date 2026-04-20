@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: git-ingress
   kvPath: kv/git-ingress
+
+global: {}

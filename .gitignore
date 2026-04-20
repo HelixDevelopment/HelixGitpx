@@ -20,11 +20,13 @@ profile.cov
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Go workspace file (ignore at root; allow under impl/)
+# Go workspace file (ignore at root; allow under impl/ and test/)
 go.work
 go.work.sum
 !impl/**/go.work
 !impl/**/go.work.sum
+!test/go.work
+!test/go.work.sum
 
 # env file
 .env

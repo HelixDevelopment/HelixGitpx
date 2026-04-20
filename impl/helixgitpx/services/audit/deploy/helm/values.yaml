@@ -36,3 +36,9 @@ vault:
   enabled: true
   role: hello
   kvPath: kv/hello
+
+global: {}
+
+merkle:
+  schedule: "0 * * * *"
+  image: ghcr.io/helixgitpx/audit-merkle:latest

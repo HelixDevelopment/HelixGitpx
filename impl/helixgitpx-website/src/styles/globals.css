@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-primary: #2563eb;
+  --brand-accent: #22d3ee;
+}
+
+/* Reduce motion for users who request it. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Subtle prose defaults used on legal / manual pages. */
+.prose h2 { margin-top: 2rem; }
+.prose ul { margin-top: 0.5rem; }
+.prose li { margin: 0.25rem 0; }

@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: live-events-service
   kvPath: kv/live-events-service
+
+global: {}

@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: opa-bundle-server
   kvPath: kv/opa-bundle-server
+
+global: {}

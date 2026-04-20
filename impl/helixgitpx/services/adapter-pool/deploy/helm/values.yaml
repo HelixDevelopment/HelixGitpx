@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: adapter-pool
   kvPath: kv/adapter-pool
+
+global: {}

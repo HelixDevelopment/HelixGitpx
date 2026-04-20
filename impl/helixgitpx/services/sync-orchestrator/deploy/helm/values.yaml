@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: sync-orchestrator
   kvPath: kv/sync-orchestrator
+
+global: {}

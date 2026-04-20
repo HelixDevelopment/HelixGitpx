@@ -2,6 +2,7 @@
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/jetbrains-mono/400.css';
+import '../styles/globals.css';
 
 interface Props {
   title: string;
@@ -21,12 +22,14 @@ const { title, description } = Astro.props as Props;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content={new URL('/og-image.svg', Astro.site ?? 'https://helixgitpx.io').toString()} />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body class="min-h-screen bg-white text-secondary antialiased">
     <header class="border-b border-slate-200">
       <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
-        <a href="/" class="flex items-center gap-2 font-semibold">
-          <span class="h-6 w-6 rounded bg-primary"></span>
+        <a href="/" class="flex items-center gap-2 font-semibold" aria-label="HelixGitpx home">
+          <img src="/brand/logo-mark.svg" alt="" width="28" height="28" />
           HelixGitpx
         </a>
         <nav class="flex gap-6 text-sm">

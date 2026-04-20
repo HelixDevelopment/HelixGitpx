@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: upstream
   kvPath: kv/upstream
+
+global: {}

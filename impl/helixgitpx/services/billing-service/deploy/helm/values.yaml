@@ -12,3 +12,5 @@ ingress:
   enabled: false
 stripe:
   apiKeySecret: billing-stripe-key
+
+global: {}

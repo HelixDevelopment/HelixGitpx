@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: ai-service
   kvPath: kv/ai-service
+
+global: {}

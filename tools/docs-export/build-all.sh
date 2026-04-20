@@ -2,17 +2,49 @@
 # build-all.sh — export every manual under docs/manuals/src/ in all formats.
 # Needs: pandoc, weasyprint (for PDF), zip. Calibre `ebook-convert` is
 # optional (adds .mobi).
+#
+# Usage:
+#   build-all.sh            — build all manuals.
+#   build-all.sh --check    — report which tools are available; exit 0
+#                             if pandoc is installed, 1 otherwise.
 set -euo pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 SRC="$REPO_ROOT/docs/manuals/src"
 DIST="$REPO_ROOT/docs/manuals/dist"
-mkdir -p "$DIST"
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+check_mode() {
+    echo "Manual export toolchain check:"
+    local ok=0
+    for tool in pandoc weasyprint ebook-convert zip; do
+        if have "$tool"; then
+            printf '  [ok]   %s (%s)\n' "$tool" "$(command -v "$tool")"
+        else
+            printf '  [miss] %s\n' "$tool"
+            [ "$tool" = "pandoc" ] && ok=1
+        fi
+    done
+    echo ""
+    if [ "$ok" = "1" ]; then
+        echo "pandoc is required. Install it (apt: pandoc · brew: pandoc · dnf: pandoc)."
+        return 1
+    fi
+    echo "Pandoc found. PDF/ePub/DOCX/TXT exports will run. Missing optional tools"
+    echo "skip only their specific output formats."
+    return 0
+}
+
+if [ "${1:-}" = "--check" ]; then
+    check_mode
+    exit $?
+fi
+
+mkdir -p "$DIST"
+
 if ! have pandoc; then
-    echo "pandoc not installed — aborting." >&2
+    echo "pandoc not installed — aborting. Run '$0 --check' for toolchain status." >&2
     exit 2
 fi
 

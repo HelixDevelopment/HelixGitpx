@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: conflict-resolver
   kvPath: kv/conflict-resolver
+
+global: {}

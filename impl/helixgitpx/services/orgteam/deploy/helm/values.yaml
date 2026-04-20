@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: orgteam
   kvPath: kv/orgteam
+
+global: {}

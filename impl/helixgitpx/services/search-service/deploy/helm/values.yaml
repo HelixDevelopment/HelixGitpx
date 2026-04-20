@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: search-service
   kvPath: kv/search-service
+
+global: {}

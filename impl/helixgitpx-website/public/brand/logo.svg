@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 56" aria-label="HelixGitpx">
+  <rect width="40" height="40" x="8" y="8" rx="8" fill="#2563eb"/>
+  <path d="M20 18 L20 46 M36 18 L36 46 M20 32 L36 32" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="28" cy="32" r="5" fill="#22d3ee" stroke="#fff" stroke-width="2.5"/>
+  <text x="60" y="37" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="600" fill="#0f172a">HelixGitpx</text>
+</svg>

@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: webhook-gateway
   kvPath: kv/webhook-gateway
+
+global: {}

@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: collab-service
   kvPath: kv/collab-service
+
+global: {}

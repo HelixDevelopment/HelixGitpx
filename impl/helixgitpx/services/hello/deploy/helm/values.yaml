@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: hello
   kvPath: kv/hello
+
+global: {}

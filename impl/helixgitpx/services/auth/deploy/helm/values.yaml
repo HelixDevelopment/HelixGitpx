@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: auth
   kvPath: kv/auth
+
+global: {}

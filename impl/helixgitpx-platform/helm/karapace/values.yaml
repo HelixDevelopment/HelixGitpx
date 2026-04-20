@@ -3,3 +3,5 @@ karapace:
   replicas: 2
   kafkaBootstrap: helix-kafka-kafka-bootstrap.helix-data.svc:9092
   port: 8081
+
+global: {}

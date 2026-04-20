@@ -36,3 +36,5 @@ vault:
   enabled: true
   role: repo
   kvPath: kv/repo
+
+global: {}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" aria-label="HelixGitpx mark">
+  <rect width="56" height="56" rx="12" fill="#2563eb"/>
+  <path d="M18 14 L18 42 M38 14 L38 42 M18 28 L38 28" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="28" cy="28" r="6" fill="#22d3ee" stroke="#fff" stroke-width="3"/>
+</svg>

@@ -1,0 +1,10 @@
+// Workspace for cross-service test modules (integration, future e2e, etc.).
+// Kept separate from impl/helixgitpx/go.work so service builds don't pull
+// in test-only dependencies.
+go 1.23.0
+
+toolchain go1.23.4
+
+use (
+	./integration
+)
