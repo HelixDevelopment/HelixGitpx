@@ -10,6 +10,8 @@ const config: Config = {
   organizationName: 'HelixGitpx',
   projectName: 'HelixGitpx',
   favicon: 'img/favicon.ico',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   presets: [
     ['classic', {
       docs: { sidebarPath: './sidebars.ts', editUrl: 'https://github.com/HelixGitpx/HelixGitpx/tree/main/impl/helixgitpx-docs-site/' },

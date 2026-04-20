@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { createConnectTransport } from '@connectrpc/connect-web';
 import { createClient } from '@connectrpc/connect';
-import { AuthService as AuthSvc } from '../../../../libs/proto/src/helixgitpx/auth/v1/auth_connect';
+import { AuthService as AuthSvc } from '../../../../../libs/proto/src/helixgitpx/auth/v1/auth_connect';
 
 const KEYCLOAK_URL = 'https://keycloak.helix.local/realms/helixgitpx';
 const CLIENT_ID = 'helixgitpx-web';

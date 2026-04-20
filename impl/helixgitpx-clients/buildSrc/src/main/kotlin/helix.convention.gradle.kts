@@ -1,7 +1,14 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("com.android.library")
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
+}
+
+extensions.configure<com.android.build.api.dsl.LibraryExtension> {
+    namespace = "dev.helixgitpx.${project.name}"
+    compileSdk = 35
+    defaultConfig { minSdk = 26 }
 }
 
 kotlin {

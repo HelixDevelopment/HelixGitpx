@@ -32,3 +32,25 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Web build artifacts
+impl/helixgitpx-web/node_modules/
+impl/helixgitpx-web/dist/
+impl/helixgitpx-web/.angular/
+impl/helixgitpx-web/.nx/
+impl/helixgitpx-web/package-lock.json
+
+# Docs site artifacts
+impl/helixgitpx-docs-site/node_modules/
+impl/helixgitpx-docs-site/build/
+impl/helixgitpx-docs-site/.docusaurus/
+impl/helixgitpx-docs-site/package-lock.json
+
+# KMP client build artifacts
+impl/helixgitpx-clients/.gradle/
+impl/helixgitpx-clients/build/
+impl/helixgitpx-clients/**/build/
+impl/helixgitpx-clients/**/.gradle/
+
+# Built binaries in source tree
+impl/helixgitpx/tools/scaffold/scaffold
