@@ -1,6 +1,6 @@
 module github.com/helixgitpx/platform
 
-go 1.26.2
+go 1.23
 
 require google.golang.org/grpc v1.80.0
 
