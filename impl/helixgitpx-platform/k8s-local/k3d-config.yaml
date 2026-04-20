@@ -1,0 +1,12 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata: { name: helix }
+servers: 1
+agents: 2
+ports:
+  - { port: "8001:80", nodeFilters: [loadbalancer] }
+  - { port: "9001:443", nodeFilters: [loadbalancer] }
+options:
+  k3s:
+    extraArgs:
+      - { arg: "--disable=traefik", nodeFilters: [server:*] }

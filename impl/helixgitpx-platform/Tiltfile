@@ -1,0 +1,16 @@
+# HelixGitpx Tiltfile — alternative to compose for the on-cluster path.
+load('ext://restart_process', 'docker_build_with_restart')
+
+docker_build(
+    'helixgitpx/hello',
+    context='../helixgitpx',
+    dockerfile='../helixgitpx/services/hello/deploy/Dockerfile',
+)
+
+k8s_yaml(helm(
+    '../helixgitpx/services/hello/deploy/helm',
+    name='hello',
+    namespace='helix',
+))
+
+k8s_resource('hello', port_forwards=['8001:8001', '9001:9001', '8081:8081'])
