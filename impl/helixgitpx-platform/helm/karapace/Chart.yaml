@@ -1,0 +1,5 @@
+apiVersion: v2
+name: karapace
+description: Karapace schema registry (BSR-compatible)
+type: application
+version: 0.1.0

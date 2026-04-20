@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karapace
+  namespace: helix-data
+spec:
+  replicas: {{ .Values.karapace.replicas }}
+  selector: { matchLabels: { app.kubernetes.io/name: karapace } }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: karapace
+        helixgitpx.dev/env: {{ .Values.global.env | default "local" }}
+    spec:
+      containers:
+        - name: karapace
+          image: {{ .Values.karapace.image | quote }}
+          ports:
+            - { name: http, containerPort: {{ .Values.karapace.port }} }
+          env:
+            - { name: KARAPACE_BOOTSTRAP_URI,    value: {{ .Values.karapace.kafkaBootstrap | quote }} }
+            - { name: KARAPACE_PORT,              value: "{{ .Values.karapace.port }}" }
+            - { name: KARAPACE_HOST,              value: "0.0.0.0" }
+            - { name: KARAPACE_REGISTRY_HOST,     value: "0.0.0.0" }
+            - { name: KARAPACE_LOG_LEVEL,         value: "WARNING" }
+          readinessProbe:
+            httpGet: { path: /_schemas, port: http }
+          resources:
+            limits:   { cpu: "1", memory: "512Mi" }
+            requests: { cpu: "100m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: karapace
+  namespace: helix-data
+spec:
+  selector: { app.kubernetes.io/name: karapace }
+  ports:
+    - { name: http, port: 8081, targetPort: http }

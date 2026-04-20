@@ -1,0 +1,5 @@
+karapace:
+  image: ghcr.io/aiven-open/karapace:latest
+  replicas: 2
+  kafkaBootstrap: helix-kafka-kafka-bootstrap.helix-data.svc:9092
+  port: 8081

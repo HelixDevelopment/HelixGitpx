@@ -1,0 +1,4 @@
+debezium:
+  replicas: 2
+  image: debezium/connect:3.0.0.Final
+  kafkaBootstrap: helix-kafka-kafka-bootstrap.helix-data.svc:9092

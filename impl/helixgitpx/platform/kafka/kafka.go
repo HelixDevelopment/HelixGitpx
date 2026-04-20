@@ -82,3 +82,22 @@ func stringOrDefault(s, def string) string {
 	}
 	return s
 }
+
+// KarapaceClient queries Karapace for schema IDs by subject + version.
+type KarapaceClient struct {
+	URL string // e.g. "http://karapace.helix-data.svc:8081"
+	// TODO(M5): wire an actual HTTP client with caching.
+}
+
+// Resolve returns the schema ID for the given subject/version.
+// M2: returns -1 when KarapaceClient.URL is unset (no-op fallback).
+// M5: implements real HTTP call to /subjects/<subject>/versions/<version>.
+func (k *KarapaceClient) Resolve(_ context.Context, subject string, version int) (int, error) {
+	if k == nil || k.URL == "" {
+		return -1, nil
+	}
+	// Reference args so the compiler doesn't complain in M2's stub.
+	_ = subject
+	_ = version
+	return -1, nil
+}

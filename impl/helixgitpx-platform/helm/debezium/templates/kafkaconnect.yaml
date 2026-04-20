@@ -1,0 +1,22 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: debezium
+  namespace: helix-data
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  image: {{ .Values.debezium.image | quote }}
+  replicas: {{ .Values.debezium.replicas }}
+  bootstrapServers: {{ .Values.debezium.kafkaBootstrap | quote }}
+  config:
+    group.id: debezium-connect-cluster
+    offset.storage.topic: debezium-connect-cluster-offsets
+    config.storage.topic: debezium-connect-cluster-configs
+    status.storage.topic: debezium-connect-cluster-status
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1
+  resources:
+    requests: { cpu: 500m, memory: 1Gi }
+    limits:   { cpu: 2,    memory: 2Gi }
