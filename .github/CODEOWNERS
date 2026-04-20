@@ -1,0 +1,8 @@
+# Solo operation — every path requires the maintainer. Expand as team grows.
+*               @milosvasic
+
+# Sensitive areas (explicit for clarity)
+/docs/specifications/main/                 @milosvasic
+/.github/workflows/                        @milosvasic
+/impl/helixgitpx-platform/vault/           @milosvasic
+/impl/helixgitpx-platform/kyverno/         @milosvasic

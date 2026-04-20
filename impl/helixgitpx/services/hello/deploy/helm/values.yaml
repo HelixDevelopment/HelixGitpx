@@ -1,0 +1,11 @@
+image:
+  repository: helixgitpx/hello
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  HELLO_HTTP_ADDR: ":8001"
+  HELLO_GRPC_ADDR: ":9001"
+  HELLO_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
