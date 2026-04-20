@@ -1,0 +1,6 @@
+cilium:
+  operator:
+    replicas: 1
+  hubble:
+    ui:
+      enabled: true

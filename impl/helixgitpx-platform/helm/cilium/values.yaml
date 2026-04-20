@@ -1,0 +1,14 @@
+cilium:
+  k8sServiceHost: host.docker.internal
+  k8sServicePort: 6443
+  ipam:
+    mode: kubernetes
+  kubeProxyReplacement: true
+  hubble:
+    enabled: true
+    relay:
+      enabled: true
+    ui:
+      enabled: false
+  operator:
+    replicas: 2
