@@ -1,0 +1,13 @@
+{
+  "role_type": "jwt",
+  "bound_audiences": ["https://github.com/helixgitpx"],
+  "bound_claims_type": "string",
+  "bound_claims": {
+    "repository": "helixgitpx/*",
+    "workflow": "deploy"
+  },
+  "user_claim": "actor",
+  "token_policies": ["deploy"],
+  "token_ttl": 900,
+  "token_max_ttl": 1800
+}
