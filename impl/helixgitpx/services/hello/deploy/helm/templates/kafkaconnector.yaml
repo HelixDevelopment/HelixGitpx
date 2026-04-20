@@ -1,0 +1,28 @@
+{{- if .Values.migrate.enabled }}
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: {{ .Release.Name }}-outbox
+  namespace: helix-data
+  labels:
+    strimzi.io/cluster: debezium
+spec:
+  class: io.debezium.connector.postgresql.PostgresConnector
+  tasksMax: 1
+  config:
+    database.hostname: helix-pg-rw.helix-data.svc
+    database.port: "5432"
+    database.user: hello_svc
+    database.password: ${secret:helix-data:hello-pg-secret/password}
+    database.dbname: helixgitpx
+    database.server.name: hellodbs
+    plugin.name: pgoutput
+    publication.name: helix_hello_outbox
+    slot.name: helix_hello_outbox
+    table.include.list: hello.outbox_events
+    topic.prefix: hellodbs
+    transforms: outbox
+    transforms.outbox.type: io.debezium.transforms.outbox.EventRouter
+    transforms.outbox.route.by.field: topic
+    transforms.outbox.route.topic.replacement: ${routedByValue}
+{{- end }}

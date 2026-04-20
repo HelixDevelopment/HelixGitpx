@@ -12,6 +12,7 @@ RUN cd services/hello && \
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/hello /app/hello
+COPY --from=build /src/services/hello/migrations /migrations
 USER nonroot
 EXPOSE 8001 9001 8081
 ENTRYPOINT ["/app/hello"]

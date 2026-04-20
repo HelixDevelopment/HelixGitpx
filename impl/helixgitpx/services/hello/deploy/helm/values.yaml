@@ -9,3 +9,30 @@ env:
 resources:
   limits:   { cpu: "1", memory: "256Mi" }
   requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/hello
+    tag: dev
+  env:
+    - name: HELLO_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: hello-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: hello.helix.local
+  tlsSecret: hello-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: hello
+  kvPath: kv/hello
