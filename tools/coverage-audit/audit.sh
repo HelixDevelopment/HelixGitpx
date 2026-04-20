@@ -10,20 +10,28 @@ cd "$REPO_ROOT/impl/helixgitpx"
 failures=0
 total_pkgs=0
 
-for mod in $(go list -m -json ./... 2>/dev/null | python3 -c 'import sys,json; [print(m["Dir"]) for m in map(json.loads, sys.stdin.read().split("}\n{")) if "Dir" in m]' 2>/dev/null || find . -name go.mod -exec dirname {} \;); do
+mods=$(find . -name go.mod -not -path './gen/*' -exec dirname {} \; | sort)
+
+for mod in $mods; do
     [ -d "$mod" ] || continue
     pushd "$mod" >/dev/null
     for pkg in $(GOTOOLCHAIN=go1.23.4 go list ./... 2>/dev/null); do
         total_pkgs=$((total_pkgs+1))
-        out=$(GOTOOLCHAIN=go1.23.4 go test -cover -count=1 "$pkg" 2>&1 | grep -oE 'coverage: [0-9.]+%' | head -1 | grep -oE '[0-9.]+' || echo "0")
-        pct=${out:-0}
-        status="OK"
-        cmp=$(python3 -c "print(1 if float('$pct') < float('$MIN_COVERAGE') else 0)")
-        if [ "$cmp" = "1" ]; then
+        # Extract first numeric coverage value only; default 0 when test output
+        # is empty or the package has no test files.
+        set +e
+        raw=$(GOTOOLCHAIN=go1.23.4 go test -cover -count=1 "$pkg" 2>&1)
+        pct=$(printf '%s' "$raw" | grep -oE 'coverage: [0-9]+\.[0-9]+%' | head -n 1 | grep -oE '[0-9]+\.[0-9]+' | head -n 1)
+        set -e
+        pct=${pct:-0}
+        status="OK "
+        # shellcheck disable=SC2016
+        below=$(awk -v p="$pct" -v t="$MIN_COVERAGE" 'BEGIN { print (p+0 < t+0) ? 1 : 0 }')
+        if [ "$below" = "1" ]; then
             status="LOW"
             failures=$((failures+1))
         fi
-        printf "  [%-3s] %6.2f%%  %s\n" "$status" "$pct" "$pkg"
+        printf '  [%-3s] %6.2f%%  %s\n' "$status" "$pct" "$pkg"
     done
     popd >/dev/null
 done

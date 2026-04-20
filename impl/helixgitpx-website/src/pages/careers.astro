@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const roles = [
+  { title: 'Senior Go Engineer — federation core', loc: 'Remote (EU/CIS)', tags: ['Go', 'Kafka', 'Postgres'] },
+  { title: 'Senior SRE — multi-region', loc: 'Remote (EU)', tags: ['K8s', 'Argo', 'Istio'] },
+  { title: 'Angular engineer — web app', loc: 'Remote (worldwide)', tags: ['Angular 19', 'Connect', 'Nx'] },
+  { title: 'Kotlin / KMP engineer — mobile + desktop', loc: 'Remote (worldwide)', tags: ['KMP', 'Compose'] },
+  { title: 'Security engineer — product', loc: 'Remote (EU)', tags: ['OPA', 'SPIFFE', 'ASVS'] },
+  { title: 'Developer advocate — first hire', loc: 'Remote', tags: ['Video', 'Docs', 'Community'] },
+];
+---
+<BaseLayout title="Careers" description="Help us federate the open-source Git world. Remote-first.">
+  <section class="mx-auto max-w-4xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Careers</h1>
+    <p class="mt-4 text-slate-600">Remote-first. Async-native. 4-day workweek pilot.</p>
+
+    <h2 class="mt-10 text-2xl font-semibold">Open roles</h2>
+    <div class="mt-4 divide-y divide-slate-200 border border-slate-200 rounded-lg">
+      {roles.map((r) => (
+        <div class="px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div>
+            <div class="font-medium">{r.title}</div>
+            <div class="text-sm text-slate-500">{r.loc}</div>
+            <div class="mt-1 flex gap-2">
+              {r.tags.map((t) => <span class="text-xs bg-slate-100 rounded px-2 py-0.5">{t}</span>)}
+            </div>
+          </div>
+          <a href="/contact" class="rounded bg-primary px-3 py-1 text-sm text-white hover:bg-blue-700">Apply</a>
+        </div>
+      ))}
+    </div>
+
+    <h2 class="mt-12 text-2xl font-semibold">Hiring process</h2>
+    <ol class="mt-4 space-y-2 text-slate-700 list-decimal list-inside">
+      <li>Intro call — 30 min with an engineer.</li>
+      <li>Take-home — paid, 4–6 hours, your own time.</li>
+      <li>Review — we walk through your work together.</li>
+      <li>Values + team fit — 2 conversations.</li>
+      <li>Offer.</li>
+    </ol>
+  </section>
+</BaseLayout>

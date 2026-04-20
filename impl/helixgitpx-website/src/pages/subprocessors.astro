@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const subs = [
+  { name: 'Amazon Web Services', purpose: 'Primary cloud provider (eu-central-1)', location: 'Frankfurt, DE' },
+  { name: 'Hetzner Cloud', purpose: 'Secondary region (eu-west)', location: 'Helsinki, FI' },
+  { name: 'Cloudflare', purpose: 'Edge DNS, WAF, CDN', location: 'Global' },
+  { name: 'Stripe', purpose: 'Billing, payments', location: 'Dublin, IE' },
+  { name: 'Keycloak (self-hosted)', purpose: 'Identity provider', location: 'EU' },
+  { name: 'Grafana Cloud', purpose: 'Managed metrics (optional mirror)', location: 'EU' },
+  { name: 'Anthropic, OpenAI', purpose: 'External LLM inference (opt-in per org)', location: 'US / EU' },
+  { name: 'Linear, Slack, Google Workspace', purpose: 'Internal ops (no customer data)', location: 'US' },
+];
+---
+<BaseLayout title="Subprocessors" description="Current list of HelixGitpx subprocessors and their roles.">
+  <section class="mx-auto max-w-4xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Subprocessors</h1>
+    <p class="mt-4 text-slate-600">
+      We notify customers 30 days before adding or removing any subprocessor
+      that handles customer data. Enterprise customers are notified via DPA
+      update; all customers get an email to the admin contact on file.
+    </p>
+
+    <div class="mt-10 divide-y divide-slate-200 border border-slate-200 rounded-lg">
+      {subs.map((s) => (
+        <div class="grid md:grid-cols-3 px-4 py-3 gap-2">
+          <div class="font-medium">{s.name}</div>
+          <div class="text-slate-600">{s.purpose}</div>
+          <div class="text-sm text-slate-500">{s.location}</div>
+        </div>
+      ))}
+    </div>
+
+    <p class="mt-8 text-sm text-slate-500">Last updated: 2026-04-21. Historical list on request to <a href="mailto:legal@helixgitpx.io" class="text-primary hover:underline">legal@helixgitpx.io</a>.</p>
+  </section>
+</BaseLayout>

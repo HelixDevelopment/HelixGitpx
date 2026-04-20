@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const releases = [
+  {
+    version: 'v1.0.0',
+    date: '2026-04-21',
+    title: 'General Availability',
+    notes: [
+      'Multi-region active-passive (EU-central primary, EU-west standby).',
+      '12 provider adapters at GA.',
+      'AI: PR summaries, conflict proposals, ChatOps, semantic + code search.',
+      'Policy-as-code v2 bundle (OPA) with diff-review CI gate.',
+      'Billing service, trust center, docs site, marketing site all shipping.',
+    ],
+  },
+  {
+    version: 'm8-ga',
+    date: '2026-04-20',
+    title: 'Scale, Harden, GA — milestone 8 tagged',
+    notes: [
+      'MirrorMaker 2 + CNPG logical replication.',
+      '6 Litmus chaos experiments + DR drill runbook.',
+      'Perf budgets CI gate + 7-day soak workflow.',
+      'SOC 2 Type I evidence index, bug bounty live.',
+    ],
+  },
+  {
+    version: 'm7-ai-search-policy',
+    date: '2026-04-20',
+    title: 'AI, search, and policy',
+    notes: [
+      'ai-service with LiteLLM router + Ollama + vLLM + NeMo Guardrails.',
+      'search-service with Meilisearch + Qdrant + Zoekt (RRF fusion).',
+      'opa-bundle-server + Rego v2 enforcement bundle.',
+    ],
+  },
+];
+---
+<BaseLayout title="Changelog" description="What's shipped and when.">
+  <section class="mx-auto max-w-3xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Changelog</h1>
+    <p class="mt-4 text-slate-600">Grouped by release. Full commit history on <a href="https://github.com/HelixGitpx/HelixGitpx/commits/main" class="text-primary hover:underline">GitHub</a>.</p>
+
+    <div class="mt-10 space-y-10">
+      {releases.map((r) => (
+        <article>
+          <div class="flex items-baseline gap-3">
+            <h2 class="text-2xl font-semibold">{r.version}</h2>
+            <span class="text-sm text-slate-500">{r.date}</span>
+          </div>
+          <div class="mt-1 text-slate-700">{r.title}</div>
+          <ul class="mt-3 list-disc list-inside space-y-1 text-slate-700">
+            {r.notes.map((n) => <li>{n}</li>)}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

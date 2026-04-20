@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Privacy Policy" description="How HelixGitpx handles your personal data.">
+  <section class="mx-auto max-w-3xl px-6 py-16 prose prose-slate">
+    <h1>Privacy Policy</h1>
+    <p><em>Last updated: 2026-04-21.</em></p>
+
+    <h2>1. Who we are</h2>
+    <p>HelixDevelopment UG (haftungsbeschränkt), Berlin, Germany. Data controller for Service-related processing is HelixDevelopment.</p>
+
+    <h2>2. What we collect</h2>
+    <ul>
+      <li><strong>Account data</strong>: email, name, organization, residency choice.</li>
+      <li><strong>Content</strong>: repositories and metadata you push or link.</li>
+      <li><strong>Usage</strong>: telemetry via OpenTelemetry (per-org opt-out available).</li>
+      <li><strong>Payment</strong>: handled by Stripe; we store invoice IDs, not card numbers.</li>
+    </ul>
+
+    <h2>3. Why we process it</h2>
+    <ul>
+      <li>To operate the Service (Art. 6(1)(b) GDPR).</li>
+      <li>To keep the Service secure (Art. 6(1)(f) GDPR).</li>
+      <li>To send transactional emails (Art. 6(1)(b) GDPR).</li>
+      <li>To invoice and collect payment (Art. 6(1)(b) GDPR).</li>
+    </ul>
+
+    <h2>4. Where we store it</h2>
+    <p>In the region you select at sign-up. Default: EU. See <a href="/subprocessors">/subprocessors</a> for the full processor list.</p>
+
+    <h2>5. How long we keep it</h2>
+    <ul>
+      <li>Active account: duration of the account + 30 days after deletion.</li>
+      <li>Audit logs: 2 years.</li>
+      <li>Security incident data: 7 years.</li>
+      <li>Invoices: 10 years (EU tax law).</li>
+    </ul>
+
+    <h2>6. Your rights</h2>
+    <p>Access, rectify, erase, port, restrict, object. Email <a href="mailto:privacy@helixgitpx.io">privacy@helixgitpx.io</a>. We respond within 30 days.</p>
+
+    <h2>7. International transfers</h2>
+    <p>Standard Contractual Clauses apply when we transfer data outside the EEA. Full DPA at <a href="/dpa">/dpa</a>.</p>
+
+    <h2>8. Changes</h2>
+    <p>Material changes announced 30 days in advance via email to the admin contact.</p>
+
+    <h2>9. Supervisory authority</h2>
+    <p>Berlin Commissioner for Data Protection and Freedom of Information. <a href="https://www.datenschutz-berlin.de">datenschutz-berlin.de</a>.</p>
+  </section>
+</BaseLayout>

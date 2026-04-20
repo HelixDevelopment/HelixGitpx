@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Start free" description="Create your HelixGitpx account. 90 seconds. No credit card.">
+  <section class="mx-auto max-w-md px-6 py-16">
+    <h1 class="text-4xl font-semibold">Start free</h1>
+    <p class="mt-3 text-slate-600">90 seconds. No credit card.</p>
+
+    <form class="mt-8 space-y-4" action="https://app.helixgitpx.io/api/v1/signup" method="post">
+      <label class="block">
+        <span class="text-sm font-medium">Work email</span>
+        <input name="email" type="email" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">Organization name</span>
+        <input name="org" type="text" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">Residency</span>
+        <select name="residency" class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+          <option value="EU">EU (Frankfurt)</option>
+          <option value="UK">UK (London)</option>
+          <option value="US">US (Virginia)</option>
+        </select>
+      </label>
+      <label class="flex gap-2 text-sm">
+        <input type="checkbox" name="terms" required />
+        <span>I agree to the <a href="/terms" class="text-primary hover:underline">terms</a> and <a href="/privacy" class="text-primary hover:underline">privacy policy</a>.</span>
+      </label>
+      <button type="submit" class="w-full rounded bg-primary px-4 py-2 font-medium text-white hover:bg-blue-700">Create account</button>
+    </form>
+
+    <p class="mt-6 text-sm text-slate-500">Already have an account? <a href="https://app.helixgitpx.io/login" class="text-primary hover:underline">Sign in →</a></p>
+  </section>
+</BaseLayout>

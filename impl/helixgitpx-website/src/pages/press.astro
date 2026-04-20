@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Press" description="Press kit, assets, and contact.">
+  <section class="mx-auto max-w-3xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Press</h1>
+    <p class="mt-4 text-slate-600">Everything journalists and analysts need.</p>
+
+    <h2 class="mt-10 text-2xl font-semibold">Quick facts</h2>
+    <ul class="mt-4 space-y-1 text-slate-700 list-disc list-inside">
+      <li>Founded 2025. Legal entity in Berlin.</li>
+      <li>Open source (Apache-2.0 code, CC-BY-SA-4.0 docs).</li>
+      <li>General Availability: v1.0.0, 2026.</li>
+      <li>12 Git provider adapters at GA.</li>
+      <li>Active-passive multi-region (EU-central / EU-west at GA).</li>
+    </ul>
+
+    <h2 class="mt-10 text-2xl font-semibold">Boilerplate</h2>
+    <p class="mt-2 text-slate-700">
+      <em>HelixGitpx is a federated Git proxy that mirrors repositories
+      across every major Git hosting provider. Teams push once;
+      HelixGitpx replicates to GitHub, GitLab, Gitea, Gitee, Bitbucket,
+      GitFlic, GitVerse, Azure DevOps, AWS CodeCommit, Forgejo,
+      SourceHut, and any generic Git-over-HTTPS host. Policy-driven,
+      AI-assisted, open source.</em>
+    </p>
+
+    <h2 class="mt-10 text-2xl font-semibold">Assets</h2>
+    <ul class="mt-4 space-y-1 text-slate-700 list-disc list-inside">
+      <li>Logos: <a href="/press/helixgitpx-logos.zip" class="text-primary hover:underline">helixgitpx-logos.zip</a> (SVG, PNG, 1×/2× dark/light).</li>
+      <li>Founder headshots: on request.</li>
+      <li>Product screenshots: on request.</li>
+    </ul>
+
+    <h2 class="mt-10 text-2xl font-semibold">Contact</h2>
+    <p class="mt-2 text-slate-700"><a href="mailto:press@helixgitpx.io" class="text-primary hover:underline">press@helixgitpx.io</a> — response within 1 business day.</p>
+  </section>
+</BaseLayout>

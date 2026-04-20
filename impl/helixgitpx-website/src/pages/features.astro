@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const groups = [
+  {
+    title: 'Federation',
+    rows: [
+      ['12 provider adapters', 'GitHub, GitLab, Gitea, Gitee, Bitbucket, GitFlic, GitVerse, Azure DevOps, AWS CodeCommit, Forgejo, SourceHut, generic Git-over-HTTPS.'],
+      ['Bi-directional sync', 'Writes mirror out; webhooks mirror in. Every metadata field has a canonical mapping.'],
+      ['Conflict inbox', 'Divergence surfaces as a reviewable conflict with audit trail.'],
+      ['Binding policies', 'Per-repo upstream selection with direction (read-only / write / both).'],
+    ],
+  },
+  {
+    title: 'AI',
+    rows: [
+      ['PR summaries', 'One-paragraph review-ready digest on every PR.'],
+      ['Conflict proposals', 'AI suggests a resolution; human always gates.'],
+      ['Semantic + code search', 'Meilisearch + Qdrant + Zoekt fused via RRF.'],
+      ['ChatOps', 'Natural-language operations from any chat surface.'],
+      ['Local or cloud', 'Ollama + vLLM on your GPU pool; fall back to external LLMs per policy.'],
+    ],
+  },
+  {
+    title: 'Policy',
+    rows: [
+      ['OPA Rego bundles', 'Every enforcement point in a signed, versioned bundle.'],
+      ['Diff-review gate', 'Every policy change gets a human review in CI.'],
+      ['NeMo Guardrails', 'LLM output enforcement (jailbreak, PII, shape).'],
+      ['Kyverno admission', 'Cluster-side policy on manifests.'],
+    ],
+  },
+  {
+    title: 'Platform',
+    rows: [
+      ['GitOps-native', 'Every component via Argo CD app-of-apps.'],
+      ['Multi-region HA', 'Active-passive, 5 min RTO, 30 s RPO.'],
+      ['Observability', 'OpenTelemetry + Prometheus + Loki + Tempo + Pyroscope.'],
+      ['Chaos-tested', 'Litmus experiments + quarterly DR drills.'],
+    ],
+  },
+];
+---
+<BaseLayout title="Features" description="The full feature surface — federation, AI, policy, platform.">
+  <section class="mx-auto max-w-5xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Features</h1>
+    <p class="mt-4 text-slate-600">Every major capability shipped at v1.0.</p>
+
+    {groups.map((g) => (
+      <div class="mt-12">
+        <h2 class="text-2xl font-semibold">{g.title}</h2>
+        <div class="mt-4 divide-y divide-slate-200 border border-slate-200 rounded-lg">
+          {g.rows.map(([name, desc]) => (
+            <div class="grid grid-cols-3 px-4 py-3">
+              <div class="font-medium">{name}</div>
+              <div class="col-span-2 text-slate-600">{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </section>
+</BaseLayout>

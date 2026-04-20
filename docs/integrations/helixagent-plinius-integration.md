@@ -4,14 +4,20 @@
 > **Received:** 2026-04-20.
 >
 > ⚠️ **READ FIRST:**
-> [`helixagent-plinius-verification.md`](./helixagent-plinius-verification.md) —
-> independent fact-check of every claim below. Key findings: the **Go port
-> layer does not exist yet** (no `vasic-digital/go-elder-plinius*` repos today);
-> three named modules (`go-tempest`, `go-gandalf-solutions`, `go-gitgpt`) have
-> **no upstream** in elder-plinius; and several HelixAgent submodules in the
-> integration table (DebateOrchestrator, Agentic, HelixSpecifier, MCP-Servers,
-> BackgroundTasks, BootManager) may be private or not-yet-created. Insert a W0
-> "port & inventory" spike before Phase 1.
+> 1. [`helixagent-plinius-verification.md`](./helixagent-plinius-verification.md)
+>    — independent fact-check of every claim below.
+> 2. [`helixagent-plinius-w0-spike.md`](./helixagent-plinius-w0-spike.md)
+>    — the Week 0 spike specification that must land before Phase 1.
+>
+> Key findings: the **Go port layer does not exist yet** (no
+> `vasic-digital/go-elder-plinius*` repos today); three named modules
+> (`go-tempest`, `go-gandalf-solutions`, `go-gitgpt`) have **no upstream** in
+> elder-plinius; and several HelixAgent submodules named in the integration
+> table (DebateOrchestrator, Agentic, HelixSpecifier, MCP-Servers,
+> BackgroundTasks, BootManager) may be private or not-yet-created.
+>
+> **Do not start Phase 1 until the W0 spike is complete** and the module
+> inventory matrix in the spike doc is filled in.
 >
 > **Scope:** This document describes an integration plan against the HelixAgent
 > project (HelixDevelopment/HelixAgent) and the go-elder-plinius module family.

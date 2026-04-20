@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Book a demo" description="See HelixGitpx federation, AI, and policy live — 30 minutes.">
+  <section class="mx-auto max-w-md px-6 py-16">
+    <h1 class="text-4xl font-semibold">Book a demo</h1>
+    <p class="mt-3 text-slate-600">30 minutes. Bring your hardest migration or compliance question.</p>
+
+    <form class="mt-8 space-y-4" action="https://app.helixgitpx.io/api/v1/demo-request" method="post">
+      <label class="block">
+        <span class="text-sm font-medium">Your name</span>
+        <input name="name" type="text" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">Work email</span>
+        <input name="email" type="email" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">Company</span>
+        <input name="company" type="text" required class="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">Team size</span>
+        <select name="size" class="mt-1 w-full rounded border border-slate-300 px-3 py-2">
+          <option>1–10</option>
+          <option>11–50</option>
+          <option>51–250</option>
+          <option>251–1,000</option>
+          <option>1,000+</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium">What do you want to see?</span>
+        <textarea name="notes" rows="4" class="mt-1 w-full rounded border border-slate-300 px-3 py-2"></textarea>
+      </label>
+      <button type="submit" class="w-full rounded bg-primary px-4 py-2 font-medium text-white hover:bg-blue-700">Request a demo</button>
+    </form>
+
+    <p class="mt-6 text-sm text-slate-500">We respond within 1 business day.</p>
+  </section>
+</BaseLayout>

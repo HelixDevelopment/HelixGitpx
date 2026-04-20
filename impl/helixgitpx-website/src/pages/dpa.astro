@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Data Processing Agreement" description="Standard DPA for HelixGitpx customers.">
+  <section class="mx-auto max-w-3xl px-6 py-16 prose prose-slate">
+    <h1>Data Processing Agreement (DPA)</h1>
+    <p><em>Version 1.0 — 2026-04-21.</em></p>
+
+    <h2>1. Parties</h2>
+    <p>This DPA is between HelixDevelopment UG (haftungsbeschränkt), Berlin, Germany ("Processor") and the Customer identified in the Order Form ("Controller").</p>
+
+    <h2>2. Subject matter</h2>
+    <p>Processor provides HelixGitpx ("Service") to Controller. Under GDPR, Processor acts as Processor and any Controller-side sub-processors are Sub-processors.</p>
+
+    <h2>3. Nature and purpose of processing</h2>
+    <p>Hosting, replicating, indexing, and serving Git repositories and related metadata for the Controller's authorized users.</p>
+
+    <h2>4. Duration</h2>
+    <p>For the duration of the Order Form + 30 days for export + secure deletion.</p>
+
+    <h2>5. Categories of data and data subjects</h2>
+    <ul>
+      <li>Identifiers of Controller's users (name, email).</li>
+      <li>Repository content and metadata pushed by Controller's users.</li>
+      <li>Usage telemetry (unless disabled by Controller).</li>
+    </ul>
+
+    <h2>6. Sub-processors</h2>
+    <p>Current list: <a href="/subprocessors">/subprocessors</a>. Controller is notified 30 days before additions or changes.</p>
+
+    <h2>7. Security</h2>
+    <p>Processor maintains the technical and organizational measures described at <a href="/security">/security</a>, including encryption at rest and in transit, SPIFFE-based workload identity, OPA-based authorization, and annual external pen-testing.</p>
+
+    <h2>8. International transfers</h2>
+    <p>Where data is transferred outside the EEA, the EU Standard Contractual Clauses (Commission Decision 2021/914) apply. For UK customers, the UK International Data Transfer Addendum applies.</p>
+
+    <h2>9. Data subject rights</h2>
+    <p>Processor assists Controller in responding to data subject requests within 30 days. Controller initiates requests via <a href="mailto:privacy@helixgitpx.io">privacy@helixgitpx.io</a>.</p>
+
+    <h2>10. Incident notification</h2>
+    <p>Processor notifies Controller within 72 hours of confirming a personal data breach, with detail on scope, affected subjects, and remediation.</p>
+
+    <h2>11. Audit</h2>
+    <p>Controller may audit once annually with 30 days' notice, or more frequently following a security incident. SOC 2 reports satisfy most audit needs.</p>
+
+    <h2>12. Contact</h2>
+    <p><a href="mailto:legal@helixgitpx.io">legal@helixgitpx.io</a>. Signed DPA on request for Team, Scale, Enterprise customers.</p>
+  </section>
+</BaseLayout>

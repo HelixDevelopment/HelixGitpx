@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Why HelixGitpx" description="Single-provider Git is fragile. Federation is the fix.">
+  <section class="mx-auto max-w-4xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Why HelixGitpx</h1>
+    <p class="mt-4 text-lg text-slate-600">
+      A Git workflow that depends on one host is one outage away from a
+      full-team work stoppage. We built HelixGitpx so you never have to
+      pick a single provider again.
+    </p>
+
+    <h2 class="mt-12 text-2xl font-semibold">The three failure modes we fix</h2>
+    <ol class="mt-4 space-y-3 list-decimal list-inside text-slate-700">
+      <li><strong>Provider outages.</strong> When your host goes down, you stop.
+        With federation, the other eleven keep serving pushes and PRs.</li>
+      <li><strong>Vendor lock-in.</strong> Migrating is painful because every
+        provider has its own PR metadata, labels, and CI hooks. Federation
+        lets you move on your schedule — the proxy keeps the round-trip
+        data intact.</li>
+      <li><strong>Geopolitical risk.</strong> Some jurisdictions can't use
+        US-hosted Git legally, can't use Russian-hosted Git technically, or
+        need both. HelixGitpx speaks all of them.</li>
+    </ol>
+
+    <h2 class="mt-12 text-2xl font-semibold">What makes it actually different</h2>
+    <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm text-slate-700">
+      <div class="rounded border border-slate-200 p-4"><strong>Not a sync tool.</strong> HelixGitpx is an in-path proxy — it writes directly to each host; there's no "catch-up" job that goes stale.</div>
+      <div class="rounded border border-slate-200 p-4"><strong>Not a wrapper.</strong> You keep `git push` and `git pull`. The federation layer is invisible to your IDE and your CI.</div>
+      <div class="rounded border border-slate-200 p-4"><strong>Policy-driven.</strong> Every push/PR/merge is gated by OPA Rego. Org owners see every enforcement point in one place.</div>
+      <div class="rounded border border-slate-200 p-4"><strong>AI-ready.</strong> PR summaries, conflict proposals, and code search — locally hosted or via the provider of your choice.</div>
+    </div>
+
+    <div class="mt-16 text-center">
+      <a href="/signup" class="inline-block rounded bg-primary px-6 py-3 font-medium text-white hover:bg-blue-700">Start free</a>
+    </div>
+  </section>
+</BaseLayout>

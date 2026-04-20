@@ -15,6 +15,9 @@ the integration is scheduled.
   — **read alongside the plan.** Independent fact-check: confirms upstream
   elder-plinius repos exist, but the Go port layer does not; recommends a
   Week 0 "port and inventory" spike before Phase 1.
+- [`helixagent-plinius-w0-spike.md`](./helixagent-plinius-w0-spike.md)
+  — the Week 0 spike specification. This is what must land before
+  the plan's Phase 1 can start.
 
 ## Status
 

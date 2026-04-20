@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Contact" description="Sales, support, press, and security contacts.">
+  <section class="mx-auto max-w-3xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Contact</h1>
+    <p class="mt-4 text-slate-600">Pick the mailbox that matches your need.</p>
+
+    <div class="mt-10 divide-y divide-slate-200 border border-slate-200 rounded-lg">
+      <div class="grid grid-cols-3 px-4 py-4">
+        <div class="font-medium">Sales / demos</div>
+        <div class="col-span-2"><a href="mailto:sales@helixgitpx.io" class="text-primary hover:underline">sales@helixgitpx.io</a></div>
+      </div>
+      <div class="grid grid-cols-3 px-4 py-4">
+        <div class="font-medium">Support (customers)</div>
+        <div class="col-span-2"><a href="mailto:support@helixgitpx.io" class="text-primary hover:underline">support@helixgitpx.io</a></div>
+      </div>
+      <div class="grid grid-cols-3 px-4 py-4">
+        <div class="font-medium">Security</div>
+        <div class="col-span-2"><a href="mailto:security@helixgitpx.io" class="text-primary hover:underline">security@helixgitpx.io</a> or <a href="https://hackerone.com/helixgitpx" class="text-primary hover:underline">HackerOne</a></div>
+      </div>
+      <div class="grid grid-cols-3 px-4 py-4">
+        <div class="font-medium">Press</div>
+        <div class="col-span-2"><a href="mailto:press@helixgitpx.io" class="text-primary hover:underline">press@helixgitpx.io</a></div>
+      </div>
+      <div class="grid grid-cols-3 px-4 py-4">
+        <div class="font-medium">Legal</div>
+        <div class="col-span-2"><a href="mailto:legal@helixgitpx.io" class="text-primary hover:underline">legal@helixgitpx.io</a></div>
+      </div>
+      <div class="grid grid-cols-3 px-4 py-4">
+        <div class="font-medium">General</div>
+        <div class="col-span-2"><a href="mailto:hello@helixgitpx.io" class="text-primary hover:underline">hello@helixgitpx.io</a></div>
+      </div>
+    </div>
+
+    <p class="mt-10 text-sm text-slate-500">Response targets: sales 1 business day · support same business day for Team+ plans · security acknowledge in 24 hours.</p>
+  </section>
+</BaseLayout>

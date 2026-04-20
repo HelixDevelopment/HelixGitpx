@@ -5,8 +5,12 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"sync"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 )
@@ -84,20 +88,62 @@ func stringOrDefault(s, def string) string {
 }
 
 // KarapaceClient queries Karapace for schema IDs by subject + version.
+// The cache is a small LRU keyed on subject|version; entries are immutable
+// (schema IDs never change for a given subject+version pair).
 type KarapaceClient struct {
-	URL string // e.g. "http://karapace.helix-data.svc:8081"
-	// TODO(M5): wire an actual HTTP client with caching.
+	URL    string       // e.g. "http://karapace.helix-data.svc:8081"
+	Client *http.Client // optional; defaults to http.DefaultClient
+
+	mu    sync.RWMutex
+	cache map[string]int
 }
 
 // Resolve returns the schema ID for the given subject/version.
-// M2: returns -1 when KarapaceClient.URL is unset (no-op fallback).
-// M5: implements real HTTP call to /subjects/<subject>/versions/<version>.
-func (k *KarapaceClient) Resolve(_ context.Context, subject string, version int) (int, error) {
+// When URL is unset, returns -1 as a no-op (useful in tests and local dev).
+func (k *KarapaceClient) Resolve(ctx context.Context, subject string, version int) (int, error) {
 	if k == nil || k.URL == "" {
 		return -1, nil
 	}
-	// Reference args so the compiler doesn't complain in M2's stub.
-	_ = subject
-	_ = version
-	return -1, nil
+
+	key := subject + "|" + strconv.Itoa(version)
+	k.mu.RLock()
+	if id, ok := k.cache[key]; ok {
+		k.mu.RUnlock()
+		return id, nil
+	}
+	k.mu.RUnlock()
+
+	url := fmt.Sprintf("%s/subjects/%s/versions/%d", k.URL, subject, version)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return -1, fmt.Errorf("karapace: build request: %w", err)
+	}
+	client := k.Client
+	if client == nil {
+		client = http.DefaultClient
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return -1, fmt.Errorf("karapace: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return -1, fmt.Errorf("karapace: status %d", resp.StatusCode)
+	}
+
+	var body struct {
+		ID int `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return -1, fmt.Errorf("karapace: decode: %w", err)
+	}
+
+	k.mu.Lock()
+	if k.cache == nil {
+		k.cache = map[string]int{}
+	}
+	k.cache[key] = body.ID
+	k.mu.Unlock()
+
+	return body.ID, nil
 }
