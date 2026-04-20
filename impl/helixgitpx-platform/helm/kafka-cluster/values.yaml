@@ -22,3 +22,11 @@ topics:
     partitions: 6
     replicas: 3
     retentionMs: -1
+  - name: repo.events
+    partitions: 6
+    replicas: 3
+    retentionMs: 604800000
+  - name: upstream.webhooks
+    partitions: 6
+    replicas: 3
+    retentionMs: 604800000
