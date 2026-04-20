@@ -1,0 +1,5 @@
+external-dns:
+  provider: webhook
+  extraArgs:
+    - --webhook-provider-url=http://localhost:8888
+  replicaCount: 2

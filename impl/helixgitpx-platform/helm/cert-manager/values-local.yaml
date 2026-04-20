@@ -1,0 +1,4 @@
+cert-manager:
+  replicaCount: 1
+issuer:
+  mode: selfsigned

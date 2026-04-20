@@ -1,0 +1,7 @@
+external-dns:
+  replicaCount: 1
+  extraContainers:
+    - name: noop-webhook
+      image: ghcr.io/kubernetes-sigs/external-dns-noop:v0.2.0
+      ports:
+        - containerPort: 8888

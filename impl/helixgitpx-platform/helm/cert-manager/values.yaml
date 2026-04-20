@@ -1,0 +1,13 @@
+cert-manager:
+  installCRDs: true
+  replicaCount: 2
+  prometheus:
+    enabled: true
+    servicemonitor:
+      enabled: true
+
+issuer:
+  mode: selfsigned   # "selfsigned" | "letsencrypt"
+  letsencrypt:
+    email: ""
+    dns01ProviderRef: ""
