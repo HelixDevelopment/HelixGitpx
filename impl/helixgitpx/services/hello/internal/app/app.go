@@ -18,7 +18,6 @@ import (
 	hgin "github.com/helixgitpx/platform/gin"
 	hgrpc "github.com/helixgitpx/platform/grpc"
 	"github.com/helixgitpx/platform/health"
-	"github.com/helixgitpx/platform/kafka"
 	"github.com/helixgitpx/platform/log"
 	"github.com/helixgitpx/platform/pg"
 	hredis "github.com/helixgitpx/platform/redis"
@@ -31,8 +30,7 @@ type cfg struct {
 	HealthAddr   string   `env:"HEALTH_ADDR" default:":8081"`
 	PostgresDSN  string   `env:"POSTGRES_DSN" required:"true"`
 	RedisAddr    string   `env:"REDIS_ADDR" default:"localhost:6379"`
-	KafkaBrokers []string `env:"KAFKA_BROKERS" default:"localhost:9092" split:","`
-	KafkaTopic   string   `env:"KAFKA_TOPIC" default:"hello.said"`
+	KafkaTopic string `env:"KAFKA_TOPIC" default:"hello.said"`
 	OTLPEndpoint string   `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	Version      string   `env:"VERSION" default:"m1-dev"`
 }
@@ -68,22 +66,10 @@ func Run(ctx context.Context, lg *log.Logger) error {
 	}
 	defer rc.Close()
 
-	prod, err := kafka.NewProducer(kafka.ProducerOptions{
-		Brokers: c.KafkaBrokers, ClientID: "hello", Topic: c.KafkaTopic,
-	})
-	if err != nil {
-		return err
-	}
-	defer func() {
-		shctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_ = prod.Close(shctx)
-	}()
-
 	greeter := domain.NewGreeter(
 		&repo.CounterPG{Pool: pool},
 		&repo.CacheRedis{Client: rc},
-		&repo.EventKafka{Producer: prod, Topic: c.KafkaTopic},
+		&repo.EventOutbox{Pool: pool, Topic: c.KafkaTopic},
 	)
 
 	grpcSrv, err := hgrpc.NewServer(hgrpc.Options{})
