@@ -1,0 +1,15 @@
+cluster:
+  name: helix-pg
+  instances: 3
+  storage:
+    size: 100Gi
+  wal_level: logical
+  backup:
+    enabled: true
+    s3:
+      endpoint: http://minio.helix-system.svc:9000
+      bucket: cnpg-backups
+      accessKeyRef: { name: minio-root-creds, key: MINIO_ROOT_USER }
+      secretKeyRef: { name: minio-root-creds, key: MINIO_ROOT_PASSWORD }
+  restoreDrill:
+    enabled: false

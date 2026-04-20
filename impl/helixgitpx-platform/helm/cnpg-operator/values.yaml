@@ -1,0 +1,4 @@
+cloudnative-pg:
+  replicaCount: 1
+  monitoring:
+    podMonitorEnabled: true

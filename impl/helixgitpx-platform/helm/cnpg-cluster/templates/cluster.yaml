@@ -1,0 +1,38 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cluster.name }}
+  namespace: helix-data
+spec:
+  instances: {{ .Values.cluster.instances }}
+  postgresql:
+    parameters:
+      wal_level: {{ .Values.cluster.wal_level | quote }}
+      max_wal_senders: "10"
+      max_replication_slots: "10"
+      shared_buffers: "256MB"
+  storage:
+    size: {{ .Values.cluster.storage.size }}
+  {{- if .Values.cluster.backup.enabled }}
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://{{ .Values.cluster.backup.s3.bucket }}/
+      endpointURL: {{ .Values.cluster.backup.s3.endpoint | quote }}
+      s3Credentials:
+        accessKeyId:
+          name: {{ .Values.cluster.backup.s3.accessKeyRef.name }}
+          key: {{ .Values.cluster.backup.s3.accessKeyRef.key }}
+        secretAccessKey:
+          name: {{ .Values.cluster.backup.s3.secretKeyRef.name }}
+          key: {{ .Values.cluster.backup.s3.secretKeyRef.key }}
+      wal:
+        compression: gzip
+    retentionPolicy: "30d"
+  {{- end }}
+  bootstrap:
+    initdb:
+      database: helixgitpx
+      owner: helix
+      postInitSQL:
+        - |
+{{ .Files.Get "../../sql/schemas.sql" | indent 10 }}

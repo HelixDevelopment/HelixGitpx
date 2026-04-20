@@ -1,0 +1,24 @@
+{{- if .Values.cluster.restoreDrill.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.cluster.name }}-restore-drill
+spec:
+  schedule: "0 3 1 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: drill
+              image: ghcr.io/cloudnative-pg/kubectl:1.31.3
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  kubectl cnpg restore {{ .Values.cluster.name }}-drill \
+                      --backup={{ .Values.cluster.name }}-latest \
+                      --target-time=$(date -u +%FT%TZ)
+{{- end }}
