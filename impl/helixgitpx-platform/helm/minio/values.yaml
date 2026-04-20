@@ -1,0 +1,21 @@
+minio:
+  mode: distributed
+  statefulset:
+    replicaCount: 4
+  auth:
+    rootUser: admin
+    existingSecret: minio-root-creds
+  persistence:
+    enabled: true
+    size: 20Gi
+  metrics:
+    serviceMonitor:
+      enabled: true
+
+buckets:
+  - cnpg-backups
+  - opensearch-snapshots
+  - loki-chunks
+  - tempo-traces
+  - pyroscope-profiles
+  - mimir-blocks
