@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-bundle-{{ .Values.bundleVersion }}
+  namespace: helix-system
+data:
+  authz.rego: |-
+{{ .Files.Get (printf "../../opa/bundles/%s/authz.rego" .Values.bundleVersion) | indent 4 }}

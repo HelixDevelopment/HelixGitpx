@@ -1,0 +1,5 @@
+apiVersion: v2
+name: opa-bundles
+description: HelixGitpx OPA policy bundle v1 delivered as a ConfigMap
+type: application
+version: 0.1.0
