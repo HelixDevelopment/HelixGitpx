@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/webhook-gateway
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  WEBHOOK_GATEWAY_HTTP_ADDR: ":8001"
+  WEBHOOK_GATEWAY_GRPC_ADDR: ":9001"
+  WEBHOOK_GATEWAY_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/webhook-gateway
+    tag: dev
+  env:
+    - name: WEBHOOK_GATEWAY_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: webhook-gateway-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: webhook-gateway.helix.local
+  tlsSecret: webhook-gateway-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: webhook-gateway
+  kvPath: kv/webhook-gateway

@@ -5,10 +5,14 @@ toolchain go1.23.4
 use (
 	./gen
 	./platform
+	./services/adapter-pool
 	./services/audit
 	./services/auth
+	./services/git-ingress
 	./services/hello
 	./services/orgteam
 	./services/repo
+	./services/upstream
+	./services/webhook-gateway
 	./tools/scaffold
 )

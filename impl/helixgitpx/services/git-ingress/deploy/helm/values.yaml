@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/git-ingress
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  GIT_INGRESS_HTTP_ADDR: ":8001"
+  GIT_INGRESS_GRPC_ADDR: ":9001"
+  GIT_INGRESS_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/git-ingress
+    tag: dev
+  env:
+    - name: GIT_INGRESS_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: git-ingress-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: git-ingress.helix.local
+  tlsSecret: git-ingress-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: git-ingress
+  kvPath: kv/git-ingress

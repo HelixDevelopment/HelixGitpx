@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/adapter-pool
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  ADAPTER_POOL_HTTP_ADDR: ":8001"
+  ADAPTER_POOL_GRPC_ADDR: ":9001"
+  ADAPTER_POOL_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/adapter-pool
+    tag: dev
+  env:
+    - name: ADAPTER_POOL_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: adapter-pool-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: adapter-pool.helix.local
+  tlsSecret: adapter-pool-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: adapter-pool
+  kvPath: kv/adapter-pool

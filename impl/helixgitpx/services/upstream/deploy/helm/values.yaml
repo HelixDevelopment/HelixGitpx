@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/upstream
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  UPSTREAM_HTTP_ADDR: ":8001"
+  UPSTREAM_GRPC_ADDR: ":9001"
+  UPSTREAM_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/upstream
+    tag: dev
+  env:
+    - name: UPSTREAM_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: upstream-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: upstream.helix.local
+  tlsSecret: upstream-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: upstream
+  kvPath: kv/upstream
