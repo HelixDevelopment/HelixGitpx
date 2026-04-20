@@ -1,0 +1,178 @@
+# .golangci.yml
+# Curated HelixGitpx linter config. Strict enough to catch real bugs,
+# not so strict that contributors drown in noise.
+#
+# Ref: https://golangci-lint.run/usage/linters/
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+  build-tags:
+    - integration
+    - e2e
+
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+
+linters:
+  default: none
+  enable:
+    # Correctness
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - errorlint
+    - nilerr
+    - bodyclose
+    - contextcheck
+    - rowserrcheck
+    - sqlclosecheck
+
+    # Security
+    - gosec
+    - gocritic
+
+    # Style / maintainability
+    - revive
+    - gofumpt
+    - goimports
+    - misspell
+    - unparam
+    - unconvert
+    - whitespace
+    - nolintlint
+    - gci
+    - prealloc
+    - predeclared
+    - dupword
+    - tagliatelle
+
+    # Concurrency
+    - copyloopvar    # Go 1.22+ loopvar issues caught proactively
+    - paralleltest
+
+    # Perf / allocs
+    - gocyclo
+    - gocognit
+    - nestif
+    - makezero
+
+    # Error handling
+    - wrapcheck
+
+    # Import hygiene
+    - gomodguard
+    - importas
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - (io.Closer).Close
+        - fmt.Fprintf
+    govet:
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+    staticcheck:
+      checks: ["all"]
+    revive:
+      severity: warning
+      rules:
+        - name: atomic
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: if-return
+        - name: import-shadowing
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+          disabled: true
+        - name: var-declaration
+        - name: var-naming
+    gosec:
+      severity: medium
+      excludes:
+        - G104  # errcheck duplicates
+    gocyclo:
+      min-complexity: 15
+    gocognit:
+      min-complexity: 20
+    nestif:
+      min-complexity: 5
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/vasic-digital/helixgitpx)
+      custom-order: true
+    importas:
+      no-unaliased: true
+      alias:
+        - pkg: helixgitpx.v1
+          alias: helixv1
+    wrapcheck:
+      ignoreSigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Wrap(
+        - errors.Wrapf(
+        - .Wrap(
+        - .Wrapf(
+    gomodguard:
+      blocked:
+        modules:
+          - github.com/pkg/errors:
+              recommendations:
+                - errors
+              reason: "use stdlib errors + %w"
+
+  exclusions:
+    generated: lax
+    paths:
+      - gen/
+      - vendor/
+      - "**/*.pb.go"
+      - "**/*_gen.go"
+      - "**/mock_*.go"
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - wrapcheck
+          - gosec
+          - gocyclo
+          - gocognit
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new-from-rev: origin/main
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+    - gci

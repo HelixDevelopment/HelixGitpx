@@ -1,0 +1,269 @@
+# deploy/k8s/samples/deployment.yaml
+# Sample production Deployment for a HelixGitpx microservice.
+# Copy, rename, and adjust for each service. The shared helix-platform
+# Helm chart generates these from values.yaml; this file is the
+# unpacked template for reference / debugging.
+#
+# Conventions:
+# - Labels follow app.kubernetes.io/* recommended set.
+# - Every pod: SPIRE SVID via socket, Istio Ambient mTLS, Prom annotations,
+#   readiness + liveness + startup probes, resource requests AND limits.
+# - No host networking, no privileged, read-only root fs, drop all caps.
+# - Security context: non-root, seccomp RuntimeDefault.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: repo-service
+  namespace: helixgitpx
+  labels:
+    app.kubernetes.io/name: repo-service
+    app.kubernetes.io/part-of: helixgitpx
+  annotations:
+    spiffe.io/workload-identity: "true"
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: repo-service
+  namespace: helixgitpx
+  labels:
+    app.kubernetes.io/name: repo-service
+    app.kubernetes.io/part-of: helixgitpx
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+    prometheus.io/port: "9090"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: repo-service
+  ports:
+    - name: grpc
+      port: 9000
+      targetPort: 9000
+      appProtocol: grpc
+    - name: http
+      port: 8080
+      targetPort: 8080
+      appProtocol: http
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      appProtocol: http
+    - name: health
+      port: 9091
+      targetPort: 9091
+      appProtocol: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repo-service
+  namespace: helixgitpx
+  labels:
+    app.kubernetes.io/name: repo-service
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/part-of: helixgitpx
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    rollout.argoproj.io/analysis-template: "slo-burn-check"
+spec:
+  replicas: 5
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: repo-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: repo-service
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/part-of: helixgitpx
+        helixgitpx.io/data-classification: internal
+      annotations:
+        # Kyverno verified these at admission.
+        cosign.sigstore.dev/signature: "verified"
+        # Istio Ambient — no sidecar injection.
+        ambient.istio.io/redirection: enabled
+        # Prom scrape.
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: repo-service
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 60
+      enableServiceLinks: false
+      shareProcessNamespace: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: repo-service
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: repo-service
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: repo-service
+                topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        workload-class: app
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "app"
+          effect: "NoSchedule"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: spire-agent-socket
+          csi:
+            driver: "csi.spiffe.io"
+            readOnly: true
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: config
+          configMap:
+            name: repo-service-config
+      containers:
+        - name: app
+          image: ghcr.io/vasic-digital/helixgitpx/repo-service@sha256:REPLACE_ME
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: grpc
+              containerPort: 9000
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
+            - name: health
+              containerPort: 9091
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef: { fieldPath: metadata.name }
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef: { fieldPath: metadata.namespace }
+            - name: POD_IP
+              valueFrom:
+                fieldRef: { fieldPath: status.podIP }
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef: { fieldPath: spec.nodeName }
+            - name: HELIXGITPX_ENV
+              value: "production"
+            - name: HELIXGITPX_REGION
+              value: "eu-west-1"
+            - name: HELIXGITPX_LOG_LEVEL
+              value: "info"
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: "unix:///run/spiffe/agent.sock"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector.observability:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "repo-service"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.version=$(HELIXGITPX_VERSION),deployment.environment=production"
+            - name: HELIXGITPX_VERSION
+              value: "1.0.0"
+          envFrom:
+            - configMapRef:
+                name: repo-service-config
+          resources:
+            requests:
+              cpu: "1"
+              memory: "1Gi"
+              ephemeral-storage: "500Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+              ephemeral-storage: "1Gi"
+          startupProbe:
+            httpGet: { path: /health/startup, port: health }
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: /health/ready, port: health }
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /health/live, port: health }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 15"]   # drain connections
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /run/spiffe
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /etc/helixgitpx
+              readOnly: true
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: repo-service
+  namespace: helixgitpx
+spec:
+  minAvailable: 80%
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: repo-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: repo-service-config
+  namespace: helixgitpx
+data:
+  HELIXGITPX_PG_HOST: "postgres-rw.data.svc.cluster.local"
+  HELIXGITPX_PG_PORT: "5432"
+  HELIXGITPX_PG_DB:   "helixgitpx"
+  HELIXGITPX_PG_USER: "helixgitpx_app"         # password via SPIRE-bound Vault dynamic creds
+  HELIXGITPX_KAFKA_BOOTSTRAP: "kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  HELIXGITPX_REDIS_ADDR: "dragonfly.data.svc.cluster.local:6379"
+  HELIXGITPX_SCHEMA_REGISTRY: "http://karapace.kafka.svc.cluster.local:8081"
+  HELIXGITPX_OPA_BUNDLE_URL: "http://opa-bundle-server.platform.svc.cluster.local/bundles"
+  HELIXGITPX_VAULT_ADDR: "https://vault.platform.svc.cluster.local:8200"

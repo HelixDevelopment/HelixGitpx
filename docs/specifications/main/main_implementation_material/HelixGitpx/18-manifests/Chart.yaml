@@ -1,0 +1,97 @@
+# deploy/helm/helixgitpx/Chart.yaml
+# Umbrella chart for the HelixGitpx platform.
+# Installs all services with shared configuration.
+apiVersion: v2
+name: helixgitpx
+description: "HelixGitpx — enterprise Git federation platform"
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+icon: https://docs.helixgitpx.example.com/logo.png
+home: https://helixgitpx.example.com
+sources:
+  - https://github.com/vasic-digital/helixgitpx
+  - https://github.com/vasic-digital/helixgitpx-platform
+maintainers:
+  - name: Milos Vasic
+    email: oss@vasic-digital.com
+    url: https://github.com/vasic-digital
+keywords:
+  - git
+  - federation
+  - devops
+  - multi-cloud
+
+dependencies:
+  # Data plane
+  - name: cloudnative-pg
+    version: "0.22.x"
+    repository: https://cloudnative-pg.io/charts
+    condition: postgres.enabled
+  - name: strimzi-kafka-operator
+    version: "0.43.x"
+    repository: https://strimzi.io/charts
+    condition: kafka.enabled
+  - name: redis
+    version: "20.x.x"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: redis.enabled
+
+  # Search & vector
+  - name: opensearch
+    version: "2.x.x"
+    repository: https://opensearch-project.github.io/helm-charts
+    condition: opensearch.enabled
+  - name: meilisearch
+    version: "0.10.x"
+    repository: https://meilisearch.github.io/meilisearch-kubernetes
+    condition: meilisearch.enabled
+  - name: qdrant
+    version: "1.x.x"
+    repository: https://qdrant.github.io/qdrant-helm
+    condition: qdrant.enabled
+
+  # Workflow, identity, mesh
+  - name: temporal
+    version: "0.45.x"
+    repository: https://go.temporal.io/helm-charts
+    condition: temporal.enabled
+  - name: spire
+    version: "0.23.x"
+    repository: https://spiffe.github.io/helm-charts-hardened
+    condition: spire.enabled
+  - name: istio-base
+    version: "1.23.x"
+    repository: https://istio-release.storage.googleapis.com/charts
+    condition: istio.enabled
+  - name: istiod
+    version: "1.23.x"
+    repository: https://istio-release.storage.googleapis.com/charts
+    condition: istio.enabled
+
+  # Observability
+  - name: kube-prometheus-stack
+    version: "62.x.x"
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: observability.prometheus.enabled
+  - name: loki
+    version: "6.x.x"
+    repository: https://grafana.github.io/helm-charts
+    condition: observability.loki.enabled
+  - name: tempo
+    version: "1.x.x"
+    repository: https://grafana.github.io/helm-charts
+    condition: observability.tempo.enabled
+
+  # Policy / supply chain
+  - name: kyverno
+    version: "3.x.x"
+    repository: https://kyverno.github.io/kyverno
+    condition: kyverno.enabled
+
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/operator: "false"
+  artifacthub.io/signKey: |
+    fingerprint: 1234ABCD...
+    url: https://docs.helixgitpx.example.com/cosign.pub

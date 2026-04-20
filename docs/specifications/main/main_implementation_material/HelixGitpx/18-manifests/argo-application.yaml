@@ -1,0 +1,126 @@
+# deploy/argocd/apps/helixgitpx.yaml
+# Argo CD ApplicationSet + sample Application for the HelixGitpx platform.
+# Declarative GitOps root — the cluster converges on what's in the repo.
+---
+# Per-environment ApplicationSet generator: env=staging, prod-eu, prod-us
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: helixgitpx-envs
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: staging
+            cluster: https://k8s-staging.helixgitpx.example.com
+            values_file: values-staging.yaml
+            auto_sync: true
+            branch: main
+          - env: prod-eu
+            cluster: https://k8s-prod-eu.helixgitpx.example.com
+            values_file: values-prod-eu.yaml
+            auto_sync: false           # manual sync for prod
+            branch: release/stable
+          - env: prod-us
+            cluster: https://k8s-prod-us.helixgitpx.example.com
+            values_file: values-prod-us.yaml
+            auto_sync: false
+            branch: release/stable
+  template:
+    metadata:
+      name: "helixgitpx-{{env}}"
+      namespace: argocd
+      labels:
+        env: "{{env}}"
+        app.kubernetes.io/part-of: helixgitpx
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: helixgitpx
+      source:
+        repoURL: https://git.helixgitpx.example.com/vasic-digital/helixgitpx-platform.git
+        targetRevision: "{{branch}}"
+        path: envs/{{env}}
+        helm:
+          releaseName: helixgitpx
+          valueFiles:
+            - "{{values_file}}"
+          parameters:
+            - name: global.env
+              value: "{{env}}"
+      destination:
+        server: "{{cluster}}"
+        namespace: helixgitpx
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - PruneLast=true
+          - ApplyOutOfSyncOnly=true
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m
+      revisionHistoryLimit: 20
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas
+---
+# Argo Rollout analysis for canary gating
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: slo-burn-check
+  namespace: helixgitpx
+spec:
+  args:
+    - name: service
+    - name: namespace
+      value: helixgitpx
+  metrics:
+    - name: success-rate
+      interval: 1m
+      count: 10
+      successCondition: result[0] >= 0.995
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus.observability:9090
+          query: |
+            sum(rate(helixgitpx_http_requests_total{service="{{args.service}}",code!~"5.."}[2m]))
+            /
+            sum(rate(helixgitpx_http_requests_total{service="{{args.service}}"}[2m]))
+    - name: latency-p99
+      interval: 1m
+      count: 10
+      successCondition: result[0] <= 0.3
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus.observability:9090
+          query: |
+            histogram_quantile(0.99,
+              sum by (le) (
+                rate(helixgitpx_http_request_duration_seconds_bucket{service="{{args.service}}"}[2m])
+              )
+            )
+    - name: burn-rate-fast
+      interval: 1m
+      count: 10
+      successCondition: result[0] <= 6
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus.observability:9090
+          query: |
+            helixgitpx_slo_burn_rate{service="{{args.service}}",window="1h"}

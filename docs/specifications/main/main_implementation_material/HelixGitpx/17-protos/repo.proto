@@ -1,0 +1,348 @@
+// proto/helixgitpx/v1/repo.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+import "helixgitpx/v1/common.proto";
+
+// ==============================================================
+// RepoService
+// ==============================================================
+service RepoService {
+  rpc CreateRepo  (CreateRepoRequest)  returns (Repo);
+  rpc GetRepo     (GetRepoRequest)     returns (Repo);
+  rpc UpdateRepo  (UpdateRepoRequest)  returns (Repo);
+  rpc DeleteRepo  (DeleteRepoRequest)  returns (google.protobuf.Empty);
+  rpc ArchiveRepo (ArchiveRepoRequest) returns (Repo);
+  rpc ListRepos   (ListReposRequest)   returns (RepoList);
+  rpc TransferRepo(TransferRepoRequest) returns (Repo);
+  rpc ForkRepo    (ForkRepoRequest)    returns (Repo);
+
+  // Refs
+  rpc ListRefs        (ListRefsRequest)    returns (RefList);
+  rpc GetRef          (GetRefRequest)      returns (Ref);
+  rpc UpdateRef       (UpdateRefRequest)   returns (Ref);
+  rpc DeleteRef       (DeleteRefRequest)   returns (google.protobuf.Empty);
+
+  // Branch Protection
+  rpc SetBranchProtection   (SetBranchProtectionRequest)  returns (BranchProtection);
+  rpc GetBranchProtection   (GetBranchProtectionRequest)  returns (BranchProtection);
+  rpc ListBranchProtections (ListBPRequest)               returns (BranchProtectionList);
+  rpc DeleteBranchProtection(DeleteBPRequest)             returns (google.protobuf.Empty);
+
+  // Tree navigation
+  rpc ListTree   (ListTreeRequest)  returns (TreeList);
+  rpc GetBlob    (GetBlobRequest)   returns (Blob);
+  rpc GetReadme  (GetReadmeRequest) returns (Readme);
+
+  // Commits
+  rpc ListCommits(ListCommitsRequest) returns (CommitList);
+  rpc GetCommit  (GetCommitRequest)   returns (Commit);
+  rpc CompareRefs(CompareRefsRequest) returns (Comparison);
+
+  // Topics
+  rpc SetTopics  (SetTopicsRequest)  returns (Repo);
+
+  // Live updates
+  rpc WatchRepo  (WatchRepoRequest)  returns (stream RepoEvent);
+}
+
+// ==============================================================
+
+message Repo {
+  UUID id = 1;
+  UUID org_id = 2;
+  string slug = 3;
+  string display_name = 4;
+  string description = 5;
+  Visibility visibility = 6;
+  string default_branch = 7;
+  string primary_upstream = 8;
+  int64 size_bytes = 9;
+  bool archived = 10;
+  bool template = 11;
+  repeated string topics = 12;
+  string license = 13;
+  map<string,string> settings = 14;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+  google.protobuf.Timestamp pushed_at = 22;
+}
+
+message CreateRepoRequest {
+  UUID org_id = 1;
+  string slug = 2;
+  string display_name = 3;
+  string description = 4;
+  Visibility visibility = 5;
+  string default_branch = 6;
+  string primary_upstream = 7;
+  repeated string topics = 8;
+  string license = 9;
+  bool template = 10;
+  bool auto_bind_all_enabled_upstreams = 11;
+  bool init_with_readme = 12;
+  string gitignore_template = 13;
+}
+
+message GetRepoRequest {
+  oneof selector {
+    UUID id = 1;
+    SlugPair slug = 2;
+  }
+  google.protobuf.FieldMask fields = 10;
+}
+message SlugPair { string org = 1; string repo = 2; }
+
+message UpdateRepoRequest {
+  UUID id = 1;
+  google.protobuf.FieldMask update_mask = 2;
+  Repo repo = 3;
+}
+
+message DeleteRepoRequest {
+  UUID id = 1;
+  bool cascade_delete_on_upstreams = 2;
+}
+
+message ArchiveRepoRequest {
+  UUID id = 1;
+  bool archive = 2; // false = unarchive
+}
+
+message ListReposRequest {
+  UUID org_id = 1;
+  Page page = 2;
+  string filter = 3;   // AIP-160
+  repeated string expand = 4;
+}
+
+message RepoList {
+  repeated Repo items = 1;
+  PageResponse page = 2;
+}
+
+message TransferRepoRequest {
+  UUID id = 1;
+  UUID to_org_id = 2;
+}
+
+message ForkRepoRequest {
+  UUID source_id = 1;
+  UUID target_org_id = 2;
+  string new_slug = 3;
+  bool preserve_history = 4;
+}
+
+// ---------------- Refs ----------------------------------
+
+message Ref {
+  UUID repo_id = 1;
+  string name = 2;
+  string kind = 3;               // 'branch' | 'tag' | 'other'
+  string target_sha = 4;
+  bool is_protected = 5;
+  google.protobuf.Timestamp last_updated_at = 6;
+  string last_origin = 7;
+}
+
+message ListRefsRequest {
+  UUID repo_id = 1;
+  string kind = 2;
+  string prefix = 3;
+  Page page = 4;
+}
+
+message RefList {
+  repeated Ref items = 1;
+  PageResponse page = 2;
+}
+
+message GetRefRequest {
+  UUID repo_id = 1;
+  string name = 2;
+}
+
+message UpdateRefRequest {
+  UUID repo_id = 1;
+  string name = 2;
+  string expected_sha = 3;       // optimistic concurrency
+  string new_sha = 4;
+  bool force = 5;
+}
+
+message DeleteRefRequest {
+  UUID repo_id = 1;
+  string name = 2;
+  string expected_sha = 3;
+}
+
+// ---------------- Branch Protection ---------------------
+
+message BranchProtection {
+  UUID id = 1;
+  UUID repo_id = 2;
+  string pattern = 3;
+  bool require_signed_commits = 4;
+  bool require_linear_history = 5;
+  int32 required_reviews = 6;
+  repeated string required_status_checks = 7;
+  bool dismiss_stale_reviews = 8;
+  bool block_force_push = 9;
+  bool block_deletions = 10;
+  bool allow_up_to_date_merge_only = 11;
+}
+
+message SetBranchProtectionRequest {
+  BranchProtection rule = 1;
+}
+message GetBranchProtectionRequest {
+  UUID repo_id = 1; string pattern = 2;
+}
+message ListBPRequest {
+  UUID repo_id = 1;
+}
+message BranchProtectionList {
+  repeated BranchProtection items = 1;
+}
+message DeleteBPRequest {
+  UUID id = 1;
+}
+
+// ---------------- Tree / Blob ---------------------------
+
+message ListTreeRequest {
+  UUID repo_id = 1;
+  string ref = 2;                // branch/tag/sha
+  string path = 3;
+  bool recursive = 4;
+}
+message TreeList {
+  repeated TreeEntry entries = 1;
+}
+message TreeEntry {
+  string path = 1;
+  string name = 2;
+  string kind = 3;               // 'file' | 'directory' | 'symlink' | 'submodule'
+  string sha = 4;
+  int64 size_bytes = 5;
+  string mode = 6;               // octal
+  string mime_type = 7;
+}
+
+message GetBlobRequest {
+  UUID repo_id = 1;
+  string sha = 2;
+  bool include_content = 3;
+  int32 max_bytes = 4;
+}
+message Blob {
+  string sha = 1;
+  int64 size_bytes = 2;
+  bytes content = 3;             // may be truncated
+  bool truncated = 4;
+  string encoding = 5;           // 'utf8' | 'base64'
+  string mime_type = 6;
+  bool binary = 7;
+}
+
+message GetReadmeRequest {
+  UUID repo_id = 1;
+  string ref = 2;
+}
+message Readme {
+  string path = 1;
+  bytes content = 2;
+  string mime_type = 3;
+  bool rendered = 4;
+  string rendered_html = 5;
+}
+
+// ---------------- Commits -------------------------------
+
+message Commit {
+  string sha = 1;
+  repeated string parents = 2;
+  string tree_sha = 3;
+  string author_name = 4;
+  string author_email = 5;
+  google.protobuf.Timestamp author_time = 6;
+  string committer_name = 7;
+  string committer_email = 8;
+  google.protobuf.Timestamp committer_time = 9;
+  string message = 10;
+  bool signed = 11;
+  string signer = 12;
+  bool verified = 13;
+  int32 additions = 14;
+  int32 deletions = 15;
+  int32 files_changed = 16;
+}
+
+message ListCommitsRequest {
+  UUID repo_id = 1;
+  string ref = 2;
+  string path = 3;
+  string author = 4;
+  google.protobuf.Timestamp since = 5;
+  google.protobuf.Timestamp until = 6;
+  Page page = 7;
+}
+message CommitList {
+  repeated Commit items = 1;
+  PageResponse page = 2;
+}
+
+message GetCommitRequest {
+  UUID repo_id = 1;
+  string sha = 2;
+  bool include_diff = 3;
+}
+
+message CompareRefsRequest {
+  UUID repo_id = 1;
+  string base = 2;
+  string head = 3;
+}
+message Comparison {
+  int32 ahead_by = 1;
+  int32 behind_by = 2;
+  repeated Commit commits = 3;
+  repeated FileDiff files = 4;
+}
+message FileDiff {
+  string path = 1;
+  string status = 2;             // 'added'|'modified'|'removed'|'renamed'|'copied'
+  int32 additions = 3;
+  int32 deletions = 4;
+  string patch = 5;              // unified diff (may be omitted for large)
+}
+
+message SetTopicsRequest {
+  UUID repo_id = 1;
+  repeated string topics = 2;
+}
+
+// ---------------- Watch ---------------------------------
+
+message WatchRepoRequest {
+  UUID repo_id = 1;
+  string resume_token = 2;
+  repeated string event_types = 3;
+}
+message RepoEvent {
+  string event_id = 1;
+  string event_type = 2;
+  google.protobuf.Timestamp occurred_at = 3;
+  string resume_token = 4;
+  bytes payload = 5;             // Avro-encoded body, type = event_type
+  map<string,string> attributes = 6;
+}

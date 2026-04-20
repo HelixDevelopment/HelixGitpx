@@ -1,0 +1,176 @@
+# deploy/helm/helixgitpx/values-prod-eu.yaml
+# Production overlay — eu-west-1 region.
+
+global:
+  env: prod-eu
+  region: eu-west-1
+  imageRegistry: ghcr.io/vasic-digital/helixgitpx
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+  domain: helixgitpx.example.com
+  dataClassification: confidential
+  spire:
+    trustDomain: prod-eu.helixgitpx.example.com
+  logging:
+    level: info
+    sampling: 0.01
+  tracing:
+    samplingRate: 0.01
+  tls:
+    minVersion: "1.3"
+    strict: true
+  kms:
+    provider: vault-transit
+    keyRing: helixgitpx-prod-eu
+  residency:
+    pinned: true
+    allowedRegions: ["eu-west-1", "eu-central-1"]
+
+services:
+  apiGateway:
+    enabled: true
+    replicas: 20
+    resources:
+      requests: { cpu: "1",   memory: "1Gi" }
+      limits:   { cpu: "2",   memory: "2Gi" }
+    hpa: { enabled: true, minReplicas: 20, maxReplicas: 200, targetCPU: 60 }
+    flags: { requirePAT: true, requireSignedPush: true }
+
+  authService:
+    enabled: true
+    replicas: 10
+    hpa: { enabled: true, minReplicas: 10, maxReplicas: 60, targetCPU: 65 }
+
+  repoService:
+    enabled: true
+    replicas: 20
+    hpa: { enabled: true, minReplicas: 20, maxReplicas: 150, targetCPU: 65 }
+
+  orgService:        { enabled: true, replicas: 8 }
+  teamService:       { enabled: true, replicas: 6 }
+  upstreamService:   { enabled: true, replicas: 8 }
+  adapterPool:       { enabled: true, replicas: 40, perProviderMaxConcurrency: 100 }
+  webhookGateway:    { enabled: true, replicas: 15 }
+  gitIngress:        { enabled: true, replicas: 20, storage: 2Ti }
+  syncOrchestrator:  { enabled: true, replicas: 20 }
+  conflictResolver:  { enabled: true, replicas: 15 }
+  crdtService:       { enabled: true, replicas: 10 }
+  policyService:     { enabled: true, replicas: 8 }
+  auditService:      { enabled: true, replicas: 10 }
+  billingService:    { enabled: true, replicas: 5 }
+  notifyService:     { enabled: true, replicas: 10 }
+  liveEvents:        { enabled: true, replicas: 30 }
+  searchService:     { enabled: true, replicas: 10 }
+
+  aiService:
+    enabled: true
+    replicas: 10
+    inference:
+      vllm:
+        enabled: true
+        replicas: 6
+        model: "meta-llama/Llama-3.1-70B-Instruct"
+        gpu: { enabled: true, count: 4, type: "nvidia.com/gpu" }
+      ollama:
+        enabled: true
+        replicas: 4
+        models: ["qwen2.5-coder:32b", "llama3.2-vision:11b"]
+
+postgres:
+  enabled: true
+  instances: 5       # 1 primary + 2 sync + 2 async replicas
+  storage:
+    size: 4Ti
+    storageClass: nvme-ssd
+  backup:
+    enabled: true
+    destinationPath: "s3://helixgitpx-prod-eu-backups/postgres/"
+    retention: { policy: "daily: 35, weekly: 12, monthly: 12" }
+    wal:
+      compression: zstd
+      uploadInterval: "30s"
+  monitoring: { enabled: true, dashboard: "kube-prometheus-stack" }
+
+kafka:
+  enabled: true
+  replicas: 9
+  storage: 10Ti
+  retentionHours: 720      # 30d
+  tieredStorageEnabled: true
+  tieredStorageBucket: "s3://helixgitpx-prod-eu-kafka-tier"
+  kraft: true
+  min_insync_replicas: 2
+  replication_factor: 3
+
+redis:
+  enabled: true
+  architecture: replication
+  replicas: 3
+  persistence: { enabled: true, size: 500Gi }
+
+opensearch:
+  enabled: true
+  nodes: 6
+  dataNodes: 6
+  storage: 10Ti
+  snapshot:
+    bucket: "s3://helixgitpx-prod-eu-opensearch-snapshots"
+
+meilisearch:
+  enabled: true
+  replicas: 3
+  storage: 1Ti
+
+qdrant:
+  enabled: true
+  replicas: 3
+  storage: 5Ti
+
+temporal:
+  enabled: true
+  replicas: 5
+  persistence:
+    default:
+      driver: postgres
+      postgres: { existingSecret: temporal-pg }
+
+spire:
+  enabled: true
+  trustDomain: prod-eu.helixgitpx.example.com
+  upstreamAuthority:
+    kind: disk   # rotated offline; backed by HSM
+
+istio:
+  enabled: true
+  ambient: true
+  ztunnel: { replicas: 6 }
+  waypoint: { replicas: 6 }
+
+observability:
+  prometheus:
+    enabled: true
+    retentionTime: 90d
+    remoteWrite:
+      - url: https://mimir.observability.internal/api/v1/push
+  loki:       { enabled: true, retention: 90d, s3Bucket: "s3://helixgitpx-prod-eu-loki" }
+  tempo:      { enabled: true, retention: 14d, s3Bucket: "s3://helixgitpx-prod-eu-tempo" }
+  pyroscope:  { enabled: true, retention: 30d }
+  alertmanager:
+    pagerduty:
+      enabledSeverities: ["P1", "P2"]
+      secretName: pagerduty-int-key
+
+kyverno:
+  enabled: true
+  failurePolicy: Fail
+
+featureFlags:
+  aiConflictAutoApply: true
+  aiShadowMode: false             # shadow stays in staging
+  aiCloudRoutingAllowed: false
+  wasmPluginsEnabled: true
+  requireSignedCommitsOnMain: true
+  sbomVerificationRequired: true
+
+residency:
+  euOnly: true

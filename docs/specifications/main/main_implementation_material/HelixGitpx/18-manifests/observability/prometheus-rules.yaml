@@ -1,0 +1,336 @@
+# deploy/observability/prometheus-rules.yaml
+# Prometheus recording + alerting rules for HelixGitpx.
+# Deployed via PrometheusRule CRD (kube-prometheus-stack).
+#
+# Recording rules live on the left; alerting rules on the right.
+# Every alert has a runbook annotation.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: helixgitpx-recording-rules
+  namespace: observability
+  labels:
+    app.kubernetes.io/part-of: helixgitpx
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    # ========================================================
+    # Recording rules — pre-computed for dashboards + alerts.
+    # ========================================================
+    - name: helixgitpx.http.sli
+      interval: 30s
+      rules:
+        - record: helixgitpx:http_requests:rate5m
+          expr: sum by (service, code_class) (
+                  rate(helixgitpx_http_requests_total[5m])
+                )
+
+        - record: helixgitpx:http_error_rate:5m
+          expr: |
+            sum by (service) (rate(helixgitpx_http_requests_total{code=~"5.."}[5m]))
+            /
+            sum by (service) (rate(helixgitpx_http_requests_total[5m]))
+
+        - record: helixgitpx:http_latency_seconds:p99_5m
+          expr: histogram_quantile(0.99,
+                  sum by (service, le) (
+                    rate(helixgitpx_http_request_duration_seconds_bucket[5m])
+                  )
+                )
+
+    - name: helixgitpx.grpc.sli
+      interval: 30s
+      rules:
+        - record: helixgitpx:grpc_error_rate:5m
+          expr: |
+            sum by (grpc_service) (rate(helixgitpx_grpc_server_handled_total{grpc_code!~"OK"}[5m]))
+            /
+            sum by (grpc_service) (rate(helixgitpx_grpc_server_handled_total[5m]))
+
+        - record: helixgitpx:grpc_latency_seconds:p99_5m
+          expr: histogram_quantile(0.99,
+                  sum by (grpc_service, le) (
+                    rate(helixgitpx_grpc_server_handling_seconds_bucket[5m])
+                  )
+                )
+
+    - name: helixgitpx.slo
+      interval: 30s
+      rules:
+        # Burn rate for "API success" SLO (99.95%). Baseline = 0.0005 / 30d.
+        # 14.4x fast-burn = 2% budget in 1h; 6x slow-burn = 10% in 6h.
+        - record: helixgitpx:slo_burn_rate:api_success:1h
+          expr: |
+            (
+              1 - (
+                sum(rate(helixgitpx_http_requests_total{service="api-gateway",code!~"5.."}[1h]))
+                /
+                sum(rate(helixgitpx_http_requests_total{service="api-gateway"}[1h]))
+              )
+            ) / 0.0005
+
+        - record: helixgitpx:slo_burn_rate:api_success:6h
+          expr: |
+            (
+              1 - (
+                sum(rate(helixgitpx_http_requests_total{service="api-gateway",code!~"5.."}[6h]))
+                /
+                sum(rate(helixgitpx_http_requests_total{service="api-gateway"}[6h]))
+              )
+            ) / 0.0005
+
+    - name: helixgitpx.kafka
+      interval: 30s
+      rules:
+        - record: helixgitpx:kafka_consumer_lag:total_by_group
+          expr: sum by (group) (helixgitpx_kafka_consumer_lag)
+
+    - name: helixgitpx.ai
+      interval: 60s
+      rules:
+        - record: helixgitpx:ai_accept_rate:1h
+          expr: avg_over_time(helixgitpx_ai_accept_rate[1h])
+
+        - record: helixgitpx:ai_accept_rate_delta:6h
+          expr: helixgitpx:ai_accept_rate:1h - helixgitpx:ai_accept_rate:1h offset 6h
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: helixgitpx-alert-rules
+  namespace: observability
+  labels:
+    app.kubernetes.io/part-of: helixgitpx
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    # ========================================================
+    # Platform / node
+    # ========================================================
+    - name: helixgitpx.platform
+      rules:
+        - alert: ServiceDown
+          expr: up{job=~"helixgitpx.*"} == 0
+          for: 3m
+          labels:
+            severity: P1
+            service: "{{ $labels.job }}"
+          annotations:
+            summary: "Service {{ $labels.job }} is down"
+            description: "No /metrics scrape for 3m."
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-002"
+
+        - alert: KubernetesNodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status!="true"} == 1
+          for: 5m
+          labels: { severity: P1 }
+          annotations:
+            summary: "Node {{ $labels.node }} is NotReady"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-001"
+
+        - alert: PodCrashLoopBackOff
+          expr: rate(kube_pod_container_status_restarts_total{namespace="helixgitpx"}[10m]) > 0.2
+          for: 15m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Pod {{ $labels.pod }} crash-looping"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-002"
+
+    # ========================================================
+    # API / service level
+    # ========================================================
+    - name: helixgitpx.api
+      rules:
+        - alert: APIGateway5xxHigh
+          expr: helixgitpx:http_error_rate:5m{service="api-gateway"} > 0.02
+          for: 5m
+          labels: { severity: P1, service: api-gateway }
+          annotations:
+            summary: "API Gateway 5xx rate > 2% for 5m"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-100"
+            dashboard_url: "https://grafana.helixgitpx.example.com/d/api-gw"
+
+        - alert: APILatencyHigh
+          expr: helixgitpx:http_latency_seconds:p99_5m{service="api-gateway"} > 0.5
+          for: 10m
+          labels: { severity: P2, service: api-gateway }
+          annotations:
+            summary: "API Gateway p99 latency > 500ms"
+
+    # ========================================================
+    # SLO burn rate
+    # ========================================================
+    - name: helixgitpx.slo
+      rules:
+        - alert: SLOFastBurn_APISuccess
+          expr: helixgitpx:slo_burn_rate:api_success:1h > 14.4
+          for: 2m
+          labels: { severity: P1 }
+          annotations:
+            summary: "SLO fast burn: 2% budget in 1h"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-100"
+
+        - alert: SLOSlowBurn_APISuccess
+          expr: helixgitpx:slo_burn_rate:api_success:6h > 6
+          for: 15m
+          labels: { severity: P2 }
+          annotations:
+            summary: "SLO slow burn: 10% budget in 6h"
+
+    # ========================================================
+    # Postgres
+    # ========================================================
+    - name: helixgitpx.postgres
+      rules:
+        - alert: PostgresPrimaryDown
+          expr: pg_up{role="primary"} == 0
+          for: 1m
+          labels: { severity: P1 }
+          annotations:
+            summary: "Postgres primary down"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-010"
+
+        - alert: PostgresReplicationLagHigh
+          expr: pg_replication_lag_seconds > 30
+          for: 5m
+          labels: { severity: P1 }
+          annotations:
+            summary: "Postgres replication lag > 30s"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-011"
+
+        - alert: PostgresDiskNearFull
+          expr: (node_filesystem_avail_bytes{mountpoint=~"/var/lib/postgresql.*"} / node_filesystem_size_bytes) < 0.15
+          for: 15m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Postgres disk usage > 85%"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-012"
+
+    # ========================================================
+    # Kafka
+    # ========================================================
+    - name: helixgitpx.kafka
+      rules:
+        - alert: KafkaUnderReplicatedPartitions
+          expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+          for: 5m
+          labels: { severity: P1 }
+          annotations:
+            summary: "Kafka under-replicated partitions > 0"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-020"
+
+        - alert: KafkaConsumerLagCritical
+          expr: helixgitpx:kafka_consumer_lag:total_by_group > 10000
+          for: 5m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Consumer group {{ $labels.group }} lag > 10k"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-021"
+
+    # ========================================================
+    # Adapter / upstream
+    # ========================================================
+    - name: helixgitpx.adapter
+      rules:
+        - alert: AdapterCircuitOpen
+          expr: helixgitpx_adapter_circuit_breaker_state == 2
+          for: 1m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Adapter circuit open for {{ $labels.provider }}"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-130"
+
+        - alert: UpstreamRateLimitLow
+          expr: helixgitpx_adapter_rate_limit_remaining < 100
+          for: 5m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Upstream rate limit low for {{ $labels.provider }}"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-130"
+
+    # ========================================================
+    # Live events
+    # ========================================================
+    - name: helixgitpx.live
+      rules:
+        - alert: LiveEventsDeliveryLagHigh
+          expr: |
+            histogram_quantile(0.99,
+              sum by (le) (rate(helixgitpx_events_delivery_seconds_bucket[5m]))
+            ) > 0.5
+          for: 5m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Live-events delivery p99 > 500ms"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-140"
+
+    # ========================================================
+    # AI
+    # ========================================================
+    - name: helixgitpx.ai
+      rules:
+        - alert: AIInferenceTimeouts
+          expr: |
+            sum(rate(helixgitpx_ai_requests_total{status="timeout"}[5m]))
+            /
+            sum(rate(helixgitpx_ai_requests_total[5m])) > 0.05
+          for: 10m
+          labels: { severity: P2 }
+          annotations:
+            summary: "AI inference timeout rate > 5%"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-150"
+
+        - alert: AIModelRegression
+          expr: helixgitpx:ai_accept_rate_delta:6h < -0.05
+          for: 1h
+          labels: { severity: P2 }
+          annotations:
+            summary: "AI accept rate dropped > 5pts vs 6h ago"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-121"
+
+    # ========================================================
+    # Conflict engine
+    # ========================================================
+    - name: helixgitpx.conflict
+      rules:
+        - alert: ConflictQueueGrowing
+          expr: |
+            histogram_quantile(0.99,
+              rate(helixgitpx_conflicts_time_to_resolve_seconds_bucket[1h])
+            ) > 21600
+          for: 30m
+          labels: { severity: P2 }
+          annotations:
+            summary: "Conflict resolution p99 > 6h"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-120"
+
+        - alert: ConflictAutoResolveDrop
+          expr: helixgitpx_conflicts_auto_resolution_ratio < 0.6
+          for: 1h
+          labels: { severity: P2 }
+          annotations:
+            summary: "Conflict auto-resolution ratio < 60%"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-121"
+
+    # ========================================================
+    # Security
+    # ========================================================
+    - name: helixgitpx.security
+      rules:
+        - alert: SuspectedCredentialCompromise
+          expr: increase(helixgitpx_security_anomalies_total{kind="geo_jump"}[10m]) > 0
+          labels: { severity: P1 }
+          annotations:
+            summary: "Suspected credential compromise (geo jump)"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-200"
+
+        - alert: UnsignedImageAdmitted
+          expr: increase(kyverno_policy_results_total{result="fail",reason=~".*unsigned.*"}[5m]) > 0
+          labels: { severity: P1 }
+          annotations:
+            summary: "Unsigned image detected at admission"
+            runbook_url: "https://docs.helixgitpx.example.com/runbooks/RB-204"

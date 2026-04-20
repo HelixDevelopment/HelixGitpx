@@ -1,0 +1,214 @@
+// proto/helixgitpx/v1/conflict.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "helixgitpx/v1/common.proto";
+
+service ConflictService {
+  rpc ListCases        (ListCasesRequest)      returns (CaseList);
+  rpc GetCase          (GetCaseRequest)        returns (Case);
+  rpc ProposeResolutions(ProposeRequest)       returns (ProposalList);
+  rpc ApplyResolution  (ApplyRequest)          returns (Resolution);
+  rpc RejectResolution (RejectRequest)         returns (google.protobuf.Empty);
+  rpc Escalate         (EscalateRequest)       returns (Case);
+  rpc Undo             (UndoRequest)           returns (Case);
+  rpc SubmitHumanResolution(HumanResolutionRequest) returns (Resolution);
+  rpc WatchCase        (WatchCaseRequest)      returns (stream CaseUpdate);
+
+  // Feedback loop
+  rpc SubmitFeedback   (FeedbackRequest)       returns (google.protobuf.Empty);
+  rpc GetMetrics       (GetMetricsRequest)     returns (ConflictMetrics);
+}
+
+// ==========================================================
+
+enum ConflictKind {
+  CONFLICT_KIND_UNSPECIFIED  = 0;
+  REF_DIVERGENCE             = 1;
+  METADATA_CONCURRENT        = 2;
+  RENAME_COLLISION           = 3;
+  PR_STATE_MISMATCH          = 4;
+  TAG_COLLISION              = 5;
+  LFS_DIVERGENCE             = 6;
+  WORKFLOW_STATUS            = 7;
+  RELEASE_ASSET              = 8;
+  OTHER                      = 99;
+}
+
+enum CaseStatus {
+  CASE_STATUS_UNSPECIFIED = 0;
+  DETECTED                = 1;
+  PROPOSED                = 2;
+  AUTO_APPLYING           = 3;
+  APPLIED                 = 4;
+  ESCALATED               = 5;
+  HUMAN_RESOLVING         = 6;
+  RESOLVED                = 7;
+  CANCELLED               = 8;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  LOW                  = 1;
+  NORMAL               = 2;
+  HIGH                 = 3;
+  CRITICAL             = 4;
+}
+
+enum DecidedBy {
+  DECIDED_BY_UNSPECIFIED = 0;
+  POLICY                 = 1;
+  CRDT                   = 2;
+  AI                     = 3;
+  HUMAN                  = 4;
+}
+
+message Case {
+  UUID id = 1;
+  UUID repo_id = 2;
+  ConflictKind kind = 3;
+  string subject = 4;
+  UUID upstream_id = 5;
+  CaseStatus status = 6;
+  Severity severity = 7;
+  string left_sha = 8;
+  string right_sha = 9;
+  string base_sha = 10;
+  string snapshot_ref = 11;
+  google.protobuf.Timestamp detected_at = 12;
+  google.protobuf.Timestamp resolved_at = 13;
+  UUID resolved_by = 14;
+  google.protobuf.Timestamp undo_until = 15;
+  map<string,string> metadata = 16;
+}
+
+message Resolution {
+  UUID id = 1;
+  UUID case_id = 2;
+  string strategy = 3;
+  DecidedBy decided_by = 4;
+  UUID actor_id = 5;
+  float confidence = 6;
+  bytes apply_plan = 7;        // JSON-encoded plan; server-interpretable
+  string rationale = 8;
+  google.protobuf.Timestamp applied_at = 9;
+  string apply_status = 10;
+  string failure_reason = 11;
+  string model_version = 12;
+}
+
+message Proposal {
+  string strategy = 1;
+  DecidedBy decided_by = 2;
+  float confidence = 3;
+  bytes apply_plan = 4;
+  string rationale = 5;
+  string model_version = 6;
+  repeated Risk risks = 7;
+}
+message Risk {
+  string code = 1;
+  string message = 2;
+  Severity severity = 3;
+}
+
+// ==========================================================
+
+message ListCasesRequest {
+  UUID repo_id = 1;
+  CaseStatus status = 2;
+  ConflictKind kind = 3;
+  Severity min_severity = 4;
+  Page page = 5;
+}
+message CaseList {
+  repeated Case items = 1;
+  PageResponse page = 2;
+}
+
+message GetCaseRequest {
+  UUID id = 1;
+  bool include_resolutions = 2;
+  bool include_proposals = 3;
+}
+
+message ProposeRequest {
+  UUID case_id = 1;
+  int32 max_proposals = 2;
+  bool use_ai = 3;
+  bool use_policy = 4;
+}
+message ProposalList {
+  repeated Proposal items = 1;
+}
+
+message ApplyRequest {
+  UUID case_id = 1;
+  string strategy = 2;
+  bytes apply_plan = 3;
+  string comment = 4;
+  bool dry_run = 5;
+}
+
+message RejectRequest {
+  UUID case_id = 1;
+  string reason = 2;
+}
+
+message EscalateRequest {
+  UUID case_id = 1;
+  UUID assign_to_user_id = 2;
+  UUID assign_to_team_id = 3;
+  string note = 4;
+}
+
+message UndoRequest {
+  UUID case_id = 1;
+  string reason = 2;
+}
+
+message HumanResolutionRequest {
+  UUID case_id = 1;
+  bytes apply_plan = 2;
+  string comment = 3;
+}
+
+message WatchCaseRequest {
+  UUID case_id = 1;
+}
+message CaseUpdate {
+  Case case = 1;
+  Resolution latest_resolution = 2;
+  string event_type = 3;
+}
+
+message FeedbackRequest {
+  UUID resolution_id = 1;
+  string outcome = 2;          // 'accepted'|'rejected'|'edited'|'ignored'
+  int32 edit_distance = 3;
+  int32 rating = 4;
+  string comment = 5;
+}
+
+message GetMetricsRequest {
+  UUID repo_id = 1;
+  google.protobuf.Timestamp since = 2;
+  google.protobuf.Timestamp until = 3;
+}
+message ConflictMetrics {
+  int64 detected_total = 1;
+  int64 auto_resolved_total = 2;
+  int64 escalated_total = 3;
+  int64 human_resolved_total = 4;
+  float auto_resolution_ratio = 5;
+  int64 median_time_to_resolve_ms = 6;
+  int64 p99_time_to_resolve_ms = 7;
+}

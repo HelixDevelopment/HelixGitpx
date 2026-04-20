@@ -1,0 +1,219 @@
+# deploy/k8s/samples/network-policies.yaml
+# NetworkPolicies enforcing zero-trust networking with Cilium CNI.
+# Default-deny at namespace level; explicit allowlists per service.
+#
+# Istio Ambient provides mTLS; these L3/L4 policies complement it.
+# For richer L7 rules, we use CiliumNetworkPolicy.
+---
+# ====== Namespace default-deny ==============================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: helixgitpx
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  # Empty ingress/egress = deny all
+---
+# ====== Allow DNS + istio telemetry (required by all pods) ==
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-system-deps
+  namespace: helixgitpx
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 15010
+        - protocol: TCP
+          port: 15012
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: spire-system
+      ports:
+        - protocol: TCP
+          port: 8081
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+      ports:
+        - protocol: TCP
+          port: 4317   # OTLP gRPC
+        - protocol: TCP
+          port: 4318   # OTLP HTTP
+---
+# ====== repo-service ingress allowlist ======================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: repo-service-ingress
+  namespace: helixgitpx
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: repo-service
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: sync-orchestrator
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: live-events-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: webhook-gateway
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9000   # grpc
+        - protocol: TCP
+          port: 8080   # http
+        - protocol: TCP
+          port: 9090   # metrics (from prom only, above)
+---
+# ====== repo-service egress allowlist =======================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: repo-service-egress
+  namespace: helixgitpx
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: repo-service
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: data
+          podSelector:
+            matchLabels:
+              cnpg.io/cluster: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kafka
+          podSelector:
+            matchLabels:
+              strimzi.io/name: kafka-kafka
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 9093
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: data
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: dragonfly
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: platform
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+---
+# ====== adapter-pool egress to the public Internet ==========
+# This service is the ONLY one with a broad egress allowance —
+# upstream Git provider calls go via the explicit NAT gateway.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: adapter-pool-egress-internet
+  namespace: helixgitpx
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: adapter-pool
+  egress:
+    - toFQDNs:
+        - matchName: "api.github.com"
+        - matchName: "github.com"
+        - matchPattern: "*.gitlab.com"
+        - matchName: "api.bitbucket.org"
+        - matchPattern: "*.gitee.com"
+        - matchPattern: "*.gitflic.ru"
+        - matchPattern: "*.gitverse.ru"
+        - matchPattern: "*.visualstudio.com"
+        - matchPattern: "*.dev.azure.com"
+        - matchPattern: "codeberg.org"
+        - matchPattern: "*.sr.ht"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+          rules:
+            http:
+              - method: "GET"
+              - method: "POST"
+              - method: "PUT"
+              - method: "PATCH"
+              - method: "DELETE"
+              - method: "HEAD"
+---
+# ====== api-gateway ingress from edge =======================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-ingress
+  namespace: helixgitpx
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9000

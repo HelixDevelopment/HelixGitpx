@@ -1,0 +1,190 @@
+// proto/helixgitpx/v1/events.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+// Live event subscription service. Primary transport is gRPC streaming.
+// The same service is exposed via Connect over WebSocket for browsers.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "helixgitpx/v1/common.proto";
+
+service EventsService {
+  // Bidirectional stream so clients can (re)declare subscriptions dynamically.
+  // Server sends Event messages; clients send Subscribe / Unsubscribe / Ack.
+  rpc Stream(stream ClientMessage) returns (stream ServerMessage);
+
+  // One-shot: replay historical events for a scope between [from, to].
+  rpc Replay(ReplayRequest) returns (stream Event);
+
+  // Query active subscriptions for this principal.
+  rpc ListSubscriptions(google.protobuf.Empty) returns (SubscriptionList);
+}
+
+// ------------- Client → Server --------------------------------
+
+message ClientMessage {
+  oneof msg {
+    Subscribe     subscribe   = 1;
+    Unsubscribe   unsubscribe = 2;
+    Ack           ack         = 3;
+    ClientHello   hello       = 4;
+    Heartbeat     heartbeat   = 5;
+  }
+}
+
+message ClientHello {
+  string client_name    = 1;
+  string client_version = 2;
+  string resume_token   = 3;   // opaque cursor from previous session
+  repeated Subscribe initial_subscriptions = 4;
+  map<string,string> attributes = 5;
+}
+
+message Subscribe {
+  string subscription_id = 1;  // client-generated, idempotent
+  Scope  scope           = 2;
+  repeated string event_types = 3;  // wildcards allowed e.g. "ref.*", "*"
+  Filter filter          = 4;
+  DeliveryOptions delivery = 5;
+}
+
+message Unsubscribe {
+  string subscription_id = 1;
+}
+
+message Ack {
+  string subscription_id = 1;
+  string resume_token    = 2;  // up-to and including
+}
+
+message Heartbeat {
+  google.protobuf.Timestamp sent_at = 1;
+}
+
+message Scope {
+  oneof kind {
+    GlobalScope global = 1;
+    OrgScope    org    = 2;
+    RepoScope   repo   = 3;
+    UserScope   user   = 4;
+    PRScope     pr     = 5;
+    IssueScope  issue  = 6;
+  }
+}
+message GlobalScope {}
+message OrgScope   { UUID org_id = 1; }
+message RepoScope  { UUID repo_id = 1; }
+message UserScope  { UUID user_id = 1; }
+message PRScope    { UUID repo_id = 1; int32 number = 2; }
+message IssueScope { UUID repo_id = 1; int32 number = 2; }
+
+message Filter {
+  string cel_expression = 1;   // simple CEL over event attributes; optional
+  repeated string required_labels = 2;
+  repeated UUID  author_ids = 3;
+}
+
+message DeliveryOptions {
+  bool   include_payload = 1;
+  int32  max_batch_size  = 2;
+  int32  max_batch_millis = 3;
+  bool   replay_from_token = 4;
+}
+
+// ------------- Server → Client --------------------------------
+
+message ServerMessage {
+  oneof msg {
+    ServerHello       hello         = 1;
+    Subscribed        subscribed    = 2;
+    Unsubscribed      unsubscribed  = 3;
+    Event             event         = 4;
+    EventBatch        event_batch   = 5;
+    Error             error         = 6;
+    HeartbeatAck      heartbeat_ack = 7;
+    RateLimitAdvice   rate_limit    = 8;
+  }
+}
+
+message ServerHello {
+  string server_version = 1;
+  string connection_id  = 2;
+  google.protobuf.Timestamp server_time = 3;
+  int32 max_subscriptions = 4;
+  int32 max_message_bytes = 5;
+  repeated string supported_transports = 6; // 'grpc_stream','connect_ws','sse'
+}
+
+message Subscribed {
+  string subscription_id = 1;
+  google.protobuf.Timestamp effective_at = 2;
+}
+
+message Unsubscribed {
+  string subscription_id = 1;
+}
+
+message Event {
+  string subscription_id = 1;
+  string event_id        = 2;
+  string event_type      = 3;
+  google.protobuf.Timestamp occurred_at = 4;
+  string resume_token    = 5;
+  bytes  payload         = 6;   // Avro-encoded or JSON depending on negotiation
+  string payload_format  = 7;   // 'avro' | 'json'
+  map<string,string> attributes = 8;
+  string trace_id = 9;
+}
+
+message EventBatch {
+  repeated Event events = 1;
+  string resume_token_last = 2;
+}
+
+message Error {
+  string code = 1;              // from error-catalog.md
+  string message = 2;
+  string subscription_id = 3;   // optional
+  bool fatal = 4;
+  map<string,string> fields = 5;
+}
+
+message HeartbeatAck {
+  google.protobuf.Timestamp server_time = 1;
+  google.protobuf.Timestamp client_sent_at = 2;
+}
+
+message RateLimitAdvice {
+  int32 tokens_remaining = 1;
+  google.protobuf.Timestamp reset_at = 2;
+  string advice = 3;            // human-readable
+}
+
+// ------------- Replay / Listing -------------------------------
+
+message ReplayRequest {
+  Scope scope = 1;
+  repeated string event_types = 2;
+  google.protobuf.Timestamp from = 3;
+  google.protobuf.Timestamp to   = 4;
+  int32 max_events = 5;
+}
+
+message SubscriptionList {
+  repeated SubscriptionStatus items = 1;
+}
+message SubscriptionStatus {
+  string subscription_id = 1;
+  Scope  scope           = 2;
+  repeated string event_types = 3;
+  google.protobuf.Timestamp created_at = 4;
+  int64 events_delivered = 5;
+  int64 events_dropped   = 6;
+  string transport       = 7;
+}

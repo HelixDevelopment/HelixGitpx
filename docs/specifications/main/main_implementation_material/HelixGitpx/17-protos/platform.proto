@@ -1,0 +1,459 @@
+// proto/helixgitpx/v1/platform.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+// Platform-level services: Policy, Audit, Notify, Billing admin.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "helixgitpx/v1/common.proto";
+
+// ==================== PolicyService ==========================
+
+service PolicyService {
+  rpc Evaluate         (EvaluateRequest)       returns (EvaluateResponse);
+  rpc BatchEvaluate    (BatchEvaluateRequest)  returns (BatchEvaluateResponse);
+
+  // Admin
+  rpc ListBundles      (ListBundlesRequest)    returns (BundleList);
+  rpc DeployBundle     (DeployBundleRequest)   returns (Bundle);
+  rpc RollbackBundle   (RollbackBundleRequest) returns (Bundle);
+  rpc AssignBundle     (AssignBundleRequest)   returns (Assignment);
+  rpc ListAssignments  (ListAssignmentsRequest) returns (AssignmentList);
+
+  // Testing / dry-run
+  rpc DryRunBundle     (DryRunBundleRequest)   returns (DryRunBundleResponse);
+  rpc DecisionHistory  (DecisionHistoryRequest) returns (DecisionHistoryResponse);
+}
+
+message EvaluateRequest {
+  string subject_kind = 1;           // 'user' | 'service' | 'system'
+  string subject_id = 2;
+  string action = 3;                 // e.g. 'repo.write'
+  string resource_kind = 4;
+  string resource_id = 5;
+  // Arbitrary context (org_ids, repo attrs, request context).
+  bytes  input_json = 6;             // JSON-encoded for Rego compat
+  string bundle_name = 7;            // empty = default bundle
+}
+message EvaluateResponse {
+  bool   allow = 1;
+  string reason = 2;
+  repeated Obligation obligations = 3;
+  int32  eval_ms = 4;
+  string bundle_revision = 5;
+}
+message Obligation {
+  string kind = 1;
+  map<string,string> attributes = 2;
+}
+
+message BatchEvaluateRequest {
+  repeated EvaluateRequest items = 1;
+}
+message BatchEvaluateResponse {
+  repeated EvaluateResponse items = 1;
+}
+
+message Bundle {
+  UUID id = 1;
+  string name = 2;
+  string revision = 3;
+  bytes digest = 4;
+  string storage_uri = 5;
+  string signed_by = 6;
+  bool active = 7;
+  google.protobuf.Timestamp deployed_at = 8;
+}
+message ListBundlesRequest {
+  string name_filter = 1;
+  Page page = 2;
+}
+message BundleList {
+  repeated Bundle items = 1;
+  PageResponse page = 2;
+}
+message DeployBundleRequest {
+  string name = 1;
+  string revision = 2;
+  bytes bundle_tar_gz = 3;
+  bytes cosign_signature = 4;
+  string notes = 5;
+}
+message RollbackBundleRequest {
+  string name = 1;
+  string to_revision = 2;
+  string reason = 3;
+}
+message Assignment {
+  UUID id = 1;
+  string scope_kind = 2;            // 'global' | 'org' | 'repo'
+  UUID scope_id = 3;
+  UUID bundle_id = 4;
+  int32 priority = 5;
+  google.protobuf.Timestamp assigned_at = 6;
+}
+message AssignBundleRequest {
+  string scope_kind = 1;
+  UUID scope_id = 2;
+  UUID bundle_id = 3;
+  int32 priority = 4;
+}
+message ListAssignmentsRequest {
+  string scope_kind = 1;
+  UUID scope_id = 2;
+}
+message AssignmentList { repeated Assignment items = 1; }
+
+message DryRunBundleRequest {
+  UUID bundle_id = 1;
+  repeated EvaluateRequest samples = 2;
+}
+message DryRunBundleResponse {
+  repeated EvaluateResponse results = 1;
+  int32 total_samples = 2;
+  int32 allowed = 3;
+  int32 denied = 4;
+}
+
+message DecisionHistoryRequest {
+  string subject_kind = 1;
+  string subject_id = 2;
+  string action = 3;
+  google.protobuf.Timestamp since = 4;
+  google.protobuf.Timestamp until = 5;
+  Page page = 6;
+}
+message DecisionHistoryResponse {
+  repeated DecisionLogEntry items = 1;
+  PageResponse page = 2;
+}
+message DecisionLogEntry {
+  google.protobuf.Timestamp at = 1;
+  string subject_kind = 2;
+  string subject_id = 3;
+  string action = 4;
+  string resource_kind = 5;
+  string resource_id = 6;
+  bool allow = 7;
+  string rule = 8;
+  string bundle_revision = 9;
+  int32 eval_ms = 10;
+}
+
+// ==================== AuditService ===========================
+
+service AuditService {
+  rpc ListEvents(ListEventsRequest) returns (EventList);
+  rpc ExportEvents(ExportEventsRequest) returns (ExportJob);
+  rpc GetExportJob(GetExportJobRequest) returns (ExportJob);
+  rpc VerifyIntegrity(VerifyIntegrityRequest) returns (VerifyIntegrityResponse);
+}
+
+enum ActorKind {
+  ACTOR_KIND_UNSPECIFIED = 0;
+  USER                   = 1;
+  SERVICE                = 2;
+  SYSTEM                 = 3;
+  AI                     = 4;
+}
+enum Outcome {
+  OUTCOME_UNSPECIFIED = 0;
+  SUCCESS             = 1;
+  FAILURE             = 2;
+  DENIED              = 3;
+}
+
+message AuditEvent {
+  string event_id = 1;
+  UUID org_id = 2;
+  ActorKind actor_kind = 3;
+  string actor_id = 4;
+  string action = 5;
+  string resource_kind = 6;
+  string resource_id = 7;
+  Outcome outcome = 8;
+  string ip = 9;
+  string user_agent = 10;
+  string trace_id = 11;
+  map<string,string> payload = 12;
+  google.protobuf.Timestamp created_at = 13;
+  bytes anchor_root = 14;
+}
+
+message ListEventsRequest {
+  UUID org_id = 1;
+  string actor_id = 2;
+  string action_prefix = 3;
+  string resource_kind = 4;
+  string resource_id = 5;
+  google.protobuf.Timestamp since = 6;
+  google.protobuf.Timestamp until = 7;
+  Outcome outcome = 8;
+  Page page = 9;
+}
+message EventList {
+  repeated AuditEvent items = 1;
+  PageResponse page = 2;
+}
+
+message ExportEventsRequest {
+  UUID org_id = 1;
+  google.protobuf.Timestamp since = 2;
+  google.protobuf.Timestamp until = 3;
+  string format = 4;            // 'jsonl' | 'csv' | 'parquet'
+  bool encrypt_for_requester = 5;
+  string requester_pgp_key_id = 6;
+}
+message ExportJob {
+  UUID id = 1;
+  string status = 2;            // 'queued'|'running'|'succeeded'|'failed'
+  string download_url = 3;
+  int64 record_count = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp completed_at = 6;
+}
+message GetExportJobRequest { UUID id = 1; }
+
+message VerifyIntegrityRequest {
+  google.protobuf.Timestamp window_from = 1;
+  google.protobuf.Timestamp window_to = 2;
+}
+message VerifyIntegrityResponse {
+  bool verified = 1;
+  int64 event_count = 2;
+  bytes merkle_root = 3;
+  string rekor_uuid = 4;
+  string rekor_url = 5;
+  string failure_reason = 6;
+}
+
+// ==================== NotifyService ==========================
+
+service NotifyService {
+  rpc RegisterChannel  (RegisterChannelRequest)  returns (NotifyChannel);
+  rpc ListChannels     (ListChannelsRequest)     returns (ChannelList);
+  rpc DeleteChannel    (DeleteChannelRequest)    returns (google.protobuf.Empty);
+  rpc VerifyChannel    (VerifyChannelRequest)    returns (NotifyChannel);
+
+  rpc Subscribe        (NotifySubscribeRequest)  returns (NotifySubscription);
+  rpc Unsubscribe      (NotifyUnsubscribeRequest) returns (google.protobuf.Empty);
+  rpc ListSubscriptions(NotifyListSubsRequest)   returns (NotifySubsList);
+  rpc UpdateSubscription(NotifyUpdateSubRequest) returns (NotifySubscription);
+
+  rpc ListDeliveries   (ListDeliveriesRequest)   returns (DeliveryList);
+
+  // Admin: cross-channel preferences
+  rpc GetPreferences   (GetPreferencesRequest)   returns (NotifyPreferences);
+  rpc UpdatePreferences(UpdatePreferencesRequest) returns (NotifyPreferences);
+}
+
+enum ChannelKind {
+  CHANNEL_UNSPECIFIED = 0;
+  EMAIL               = 1;
+  WEBPUSH             = 2;
+  SLACK               = 3;
+  TEAMS               = 4;
+  DISCORD             = 5;
+  WEBHOOK             = 6;
+  SMS                 = 7;
+}
+
+message NotifyChannel {
+  UUID id = 1;
+  UUID user_id = 2;
+  UUID org_id = 3;
+  ChannelKind kind = 4;
+  string display_address = 5;       // redacted for storage
+  bool verified = 6;
+  bool active = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message RegisterChannelRequest {
+  ChannelKind kind = 1;
+  string address = 2;              // raw (email / webhook url / token)
+  UUID org_id = 3;
+}
+message ListChannelsRequest {
+  UUID user_id = 1;
+  UUID org_id = 2;
+  ChannelKind kind = 3;
+}
+message ChannelList {
+  repeated NotifyChannel items = 1;
+}
+message DeleteChannelRequest { UUID id = 1; }
+message VerifyChannelRequest {
+  UUID id = 1;
+  string verification_code = 2;
+}
+
+message NotifySubscription {
+  UUID id = 1;
+  UUID user_id = 2;
+  string scope_kind = 3;           // 'global'|'org'|'repo'|'pr'|'issue'
+  UUID scope_id = 4;
+  repeated string event_types = 5;
+  UUID channel_id = 6;
+  string filter_cel = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+message NotifySubscribeRequest {
+  string scope_kind = 1;
+  UUID scope_id = 2;
+  repeated string event_types = 3;
+  UUID channel_id = 4;
+  string filter_cel = 5;
+}
+message NotifyUnsubscribeRequest { UUID id = 1; }
+message NotifyListSubsRequest { UUID user_id = 1; }
+message NotifySubsList { repeated NotifySubscription items = 1; }
+message NotifyUpdateSubRequest {
+  UUID id = 1;
+  repeated string event_types = 2;
+  string filter_cel = 3;
+  bool paused = 4;
+}
+
+message ListDeliveriesRequest {
+  UUID user_id = 1;
+  UUID channel_id = 2;
+  string status = 3;
+  google.protobuf.Timestamp since = 4;
+  Page page = 5;
+}
+message DeliveryList {
+  repeated Delivery items = 1;
+  PageResponse page = 2;
+}
+message Delivery {
+  UUID id = 1;
+  UUID channel_id = 2;
+  string event_id = 3;
+  string status = 4;
+  int32 attempts = 5;
+  string last_error = 6;
+  google.protobuf.Timestamp first_tried_at = 7;
+  google.protobuf.Timestamp delivered_at = 8;
+}
+
+message NotifyPreferences {
+  UUID user_id = 1;
+  bool quiet_hours_enabled = 2;
+  int32 quiet_hours_start_minute_utc = 3;  // 0..1439
+  int32 quiet_hours_end_minute_utc = 4;
+  bool batch_digest_enabled = 5;
+  int32 batch_digest_window_minutes = 6;
+  bool do_not_disturb = 7;
+}
+message GetPreferencesRequest { UUID user_id = 1; }
+message UpdatePreferencesRequest { NotifyPreferences preferences = 1; }
+
+// ==================== BillingService (admin) =================
+
+service BillingService {
+  rpc GetPlan          (GetPlanRequest)         returns (Plan);
+  rpc ListPlans        (google.protobuf.Empty)  returns (PlanList);
+  rpc GetSubscription  (GetSubscriptionRequest) returns (Subscription);
+  rpc UpgradeSubscription(UpgradeSubscriptionRequest) returns (Subscription);
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (Subscription);
+  rpc GetUsage         (GetUsageRequest)        returns (UsageResponse);
+  rpc ListInvoices     (ListInvoicesRequest)    returns (InvoiceList);
+  rpc GetInvoice       (GetInvoiceRequest)      returns (Invoice);
+
+  // Admin
+  rpc ApplyCredit      (ApplyCreditRequest)     returns (google.protobuf.Empty);
+  rpc GetQuota         (GetQuotaRequest)        returns (QuotaResponse);
+}
+
+message Plan {
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+  double price_monthly_usd = 4;
+  map<string,int64> limits = 5;
+}
+message GetPlanRequest { string id = 1; }
+message PlanList { repeated Plan items = 1; }
+
+message Subscription {
+  UUID org_id = 1;
+  string plan_id = 2;
+  string status = 3;
+  google.protobuf.Timestamp current_period_start = 4;
+  google.protobuf.Timestamp current_period_end = 5;
+  google.protobuf.Timestamp trial_ends_at = 6;
+}
+message GetSubscriptionRequest { UUID org_id = 1; }
+message UpgradeSubscriptionRequest {
+  UUID org_id = 1;
+  string target_plan_id = 2;
+  bool prorate = 3;
+}
+message CancelSubscriptionRequest {
+  UUID org_id = 1;
+  bool at_period_end = 2;
+  string reason = 3;
+}
+
+message UsageResponse {
+  UUID org_id = 1;
+  string period_month = 2;        // YYYY-MM
+  map<string,int64> meters = 3;
+  map<string,int64> limits = 4;
+  double projected_spend_usd = 5;
+}
+message GetUsageRequest {
+  UUID org_id = 1;
+  string period_month = 2;
+  repeated string meters = 3;
+}
+
+message Invoice {
+  UUID id = 1;
+  UUID org_id = 2;
+  google.protobuf.Timestamp period_from = 3;
+  google.protobuf.Timestamp period_to = 4;
+  int64 subtotal_cents = 5;
+  int64 tax_cents = 6;
+  int64 total_cents = 7;
+  string currency = 8;
+  string status = 9;
+  string pdf_url = 10;
+  google.protobuf.Timestamp issued_at = 11;
+  google.protobuf.Timestamp paid_at = 12;
+}
+message ListInvoicesRequest {
+  UUID org_id = 1;
+  string status = 2;
+  Page page = 3;
+}
+message InvoiceList {
+  repeated Invoice items = 1;
+  PageResponse page = 2;
+}
+message GetInvoiceRequest { UUID id = 1; }
+
+message ApplyCreditRequest {
+  UUID org_id = 1;
+  int64 cents = 2;
+  string reason = 3;
+  string issued_by = 4;
+}
+message GetQuotaRequest {
+  UUID org_id = 1;
+  string meter = 2;
+}
+message QuotaResponse {
+  int64 limit_units = 1;
+  int64 used_units = 2;
+  int64 remaining_units = 3;
+  string period_month = 4;
+  bool hard_capped = 5;
+}

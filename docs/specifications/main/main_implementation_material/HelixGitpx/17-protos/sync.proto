@@ -1,0 +1,154 @@
+// proto/helixgitpx/v1/sync.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "helixgitpx/v1/common.proto";
+
+service SyncService {
+  rpc TriggerSync (TriggerSyncRequest) returns (SyncJob);
+  rpc GetJob      (GetJobRequest)      returns (SyncJob);
+  rpc ListJobs    (ListJobsRequest)    returns (JobList);
+  rpc CancelJob   (CancelJobRequest)   returns (SyncJob);
+  rpc WatchJob    (WatchJobRequest)    returns (stream SyncJob);
+
+  // Upstream-specific
+  rpc PauseUpstream  (PauseUpstreamRequest)  returns (google.protobuf.Empty);
+  rpc ResumeUpstream (ResumeUpstreamRequest) returns (google.protobuf.Empty);
+  rpc ReconcileRepo  (ReconcileRepoRequest)  returns (SyncJob);
+
+  // DLQ management
+  rpc ListDLQ     (ListDLQRequest)     returns (DLQList);
+  rpc ReplayDLQ   (ReplayDLQRequest)   returns (ReplayDLQResponse);
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  QUEUED                 = 1;
+  RUNNING                = 2;
+  SUCCEEDED              = 3;
+  FAILED                 = 4;
+  CANCELLED              = 5;
+  PARTIAL                = 6;
+}
+
+message SyncJob {
+  UUID id = 1;
+  UUID repo_id = 2;
+  string workflow_id = 3;
+  string run_id = 4;
+  string trigger = 5;           // 'push','webhook','manual','schedule','reconcile'
+  JobStatus status = 6;
+  google.protobuf.Timestamp scheduled_at = 7;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp completed_at = 9;
+  int32 steps_total = 10;
+  int32 steps_done = 11;
+  string error_summary = 12;
+  repeated SyncStep steps = 13;
+}
+
+message SyncStep {
+  UUID id = 1;
+  UUID upstream_id = 2;
+  string operation = 3;
+  string status = 4;
+  string error_code = 5;
+  string error_message = 6;
+  google.protobuf.Timestamp started_at = 7;
+  google.protobuf.Timestamp finished_at = 8;
+  int32 refs_updated = 9;
+  int64 bytes_in = 10;
+  int64 bytes_out = 11;
+}
+
+// -------------------------------------------------------------
+
+message TriggerSyncRequest {
+  UUID repo_id = 1;
+  repeated UUID only_upstream_ids = 2;   // empty = all enabled
+  bool include_prs_issues = 3;
+  bool include_releases = 4;
+  bool force = 5;                        // ignore throttling
+}
+
+message GetJobRequest {
+  UUID id = 1;
+}
+
+message ListJobsRequest {
+  UUID repo_id = 1;
+  JobStatus status = 2;
+  google.protobuf.Timestamp since = 3;
+  Page page = 4;
+}
+message JobList {
+  repeated SyncJob items = 1;
+  PageResponse page = 2;
+}
+
+message CancelJobRequest {
+  UUID id = 1;
+  string reason = 2;
+}
+
+message WatchJobRequest {
+  UUID id = 1;
+}
+
+message PauseUpstreamRequest {
+  UUID upstream_id = 1;
+  string reason = 2;
+  google.protobuf.Timestamp resume_at = 3;
+}
+message ResumeUpstreamRequest {
+  UUID upstream_id = 1;
+}
+
+message ReconcileRepoRequest {
+  UUID repo_id = 1;
+  bool deep = 2;                        // full history walk vs. refs-only
+}
+
+// -------------------------------------------------------------
+
+message DLQEntry {
+  string topic = 1;
+  int32 partition = 2;
+  int64 offset = 3;
+  string error_code = 4;
+  string error_message = 5;
+  google.protobuf.Timestamp produced_at = 6;
+  google.protobuf.Timestamp failed_at = 7;
+  int32 attempts = 8;
+  bytes payload = 9;
+}
+
+message ListDLQRequest {
+  string topic = 1;
+  int32 limit = 2;
+  string cursor = 3;
+}
+message DLQList {
+  repeated DLQEntry items = 1;
+  string next_cursor = 2;
+}
+
+message ReplayDLQRequest {
+  string topic = 1;
+  int64 from_offset = 2;
+  int64 to_offset = 3;
+  bool into_main_topic = 4;
+}
+message ReplayDLQResponse {
+  int64 replayed_count = 1;
+  int64 failed_count = 2;
+  repeated string failure_reasons = 3;
+}

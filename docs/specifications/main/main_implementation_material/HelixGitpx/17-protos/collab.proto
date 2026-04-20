@@ -1,0 +1,369 @@
+// proto/helixgitpx/v1/collab.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+// Pull Requests, Issues, Comments, Reviews, Releases, AI assistance.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "helixgitpx/v1/common.proto";
+
+// ===== PRService ==============================================
+
+service PRService {
+  rpc CreatePR    (CreatePRRequest)    returns (PullRequest);
+  rpc GetPR       (GetPRRequest)       returns (PullRequest);
+  rpc UpdatePR    (UpdatePRRequest)    returns (PullRequest);
+  rpc ListPRs     (ListPRsRequest)     returns (PRList);
+  rpc MergePR     (MergePRRequest)     returns (PullRequest);
+  rpc ClosePR     (ClosePRRequest)     returns (PullRequest);
+  rpc ReopenPR    (ReopenPRRequest)    returns (PullRequest);
+  rpc AddReviewer (AddReviewerRequest) returns (PullRequest);
+  rpc SubmitReview(SubmitReviewRequest) returns (Review);
+  rpc ListReviews (ListReviewsRequest) returns (ReviewList);
+}
+
+enum PRState {
+  PR_STATE_UNSPECIFIED = 0;
+  DRAFT                = 1;
+  OPEN                 = 2;
+  CLOSED               = 3;
+  MERGED               = 4;
+}
+
+enum MergeStrategy {
+  MERGE_STRATEGY_UNSPECIFIED = 0;
+  MERGE                      = 1;
+  SQUASH                     = 2;
+  REBASE                     = 3;
+}
+
+message PullRequest {
+  UUID id = 1;
+  UUID repo_id = 2;
+  int32 number = 3;
+  string title = 4;
+  string body = 5;
+  PRState state = 6;
+  string head_ref = 7;
+  string head_sha = 8;
+  string base_ref = 9;
+  string base_sha = 10;
+  UUID author_id = 11;
+  repeated UUID assignees = 12;
+  repeated string labels = 13;
+  UUID milestone_id = 14;
+  string mergeable = 15;
+  google.protobuf.Timestamp merged_at = 16;
+  UUID merged_by = 17;
+  string merge_commit = 18;
+  MergeStrategy merge_strategy = 19;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+  google.protobuf.Timestamp closed_at = 22;
+}
+
+message CreatePRRequest {
+  UUID repo_id = 1;
+  string title = 2;
+  string body = 3;
+  string head_ref = 4;
+  string base_ref = 5;
+  bool draft = 6;
+  repeated UUID assignees = 7;
+  repeated string labels = 8;
+}
+
+message GetPRRequest {
+  UUID repo_id = 1;
+  int32 number = 2;
+  bool include_diff = 3;
+}
+
+message UpdatePRRequest {
+  UUID id = 1;
+  string title = 2;
+  string body = 3;
+  repeated UUID assignees = 4;
+  repeated string labels = 5;
+  UUID milestone_id = 6;
+}
+
+message ListPRsRequest {
+  UUID repo_id = 1;
+  PRState state = 2;
+  UUID author_id = 3;
+  UUID assignee_id = 4;
+  string label = 5;
+  Page page = 6;
+}
+message PRList {
+  repeated PullRequest items = 1;
+  PageResponse page = 2;
+}
+
+message MergePRRequest {
+  UUID id = 1;
+  MergeStrategy strategy = 2;
+  string commit_title = 3;
+  string commit_message = 4;
+  bool delete_source_branch = 5;
+}
+
+message ClosePRRequest  { UUID id = 1; string reason = 2; }
+message ReopenPRRequest { UUID id = 1; }
+message AddReviewerRequest {
+  UUID pr_id = 1;
+  repeated UUID reviewers = 2;
+  repeated UUID team_reviewers = 3;
+}
+
+enum ReviewState {
+  REVIEW_STATE_UNSPECIFIED = 0;
+  PENDING                  = 1;
+  COMMENTED                = 2;
+  APPROVED                 = 3;
+  CHANGES_REQUESTED        = 4;
+  DISMISSED                = 5;
+}
+
+message Review {
+  UUID id = 1;
+  UUID pr_id = 2;
+  UUID reviewer_id = 3;
+  ReviewState state = 4;
+  string body = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp submitted_at = 7;
+}
+message SubmitReviewRequest {
+  UUID pr_id = 1;
+  ReviewState state = 2;
+  string body = 3;
+}
+message ListReviewsRequest { UUID pr_id = 1; }
+message ReviewList { repeated Review items = 1; }
+
+// ===== IssueService ==========================================
+
+service IssueService {
+  rpc CreateIssue  (CreateIssueRequest) returns (Issue);
+  rpc GetIssue     (GetIssueRequest)    returns (Issue);
+  rpc UpdateIssue  (UpdateIssueRequest) returns (Issue);
+  rpc CloseIssue   (CloseIssueRequest)  returns (Issue);
+  rpc ReopenIssue  (ReopenIssueRequest) returns (Issue);
+  rpc ListIssues   (ListIssuesRequest)  returns (IssueList);
+  rpc LockIssue    (LockIssueRequest)   returns (Issue);
+  rpc UnlockIssue  (UnlockIssueRequest) returns (Issue);
+}
+
+enum IssueState {
+  ISSUE_STATE_UNSPECIFIED = 0;
+  ISSUE_OPEN              = 1;
+  ISSUE_CLOSED            = 2;
+}
+
+message Issue {
+  UUID id = 1;
+  UUID repo_id = 2;
+  int32 number = 3;
+  string title = 4;
+  string body = 5;            // snapshot; CRDT doc is authoritative
+  IssueState state = 6;
+  UUID author_id = 7;
+  repeated UUID assignees = 8;
+  repeated string labels = 9;
+  UUID milestone_id = 10;
+  bool locked = 11;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+  google.protobuf.Timestamp closed_at = 22;
+}
+
+message CreateIssueRequest {
+  UUID repo_id = 1;
+  string title = 2;
+  string body = 3;
+  repeated UUID assignees = 4;
+  repeated string labels = 5;
+  UUID milestone_id = 6;
+}
+
+message GetIssueRequest  { UUID repo_id = 1; int32 number = 2; }
+message UpdateIssueRequest {
+  UUID id = 1;
+  string title = 2;
+  string body = 3;
+  repeated UUID assignees = 4;
+  repeated string labels = 5;
+  UUID milestone_id = 6;
+}
+message CloseIssueRequest  { UUID id = 1; string reason = 2; }
+message ReopenIssueRequest { UUID id = 1; }
+message ListIssuesRequest {
+  UUID repo_id = 1;
+  IssueState state = 2;
+  UUID author_id = 3;
+  UUID assignee_id = 4;
+  string label = 5;
+  Page page = 6;
+}
+message IssueList { repeated Issue items = 1; PageResponse page = 2; }
+message LockIssueRequest   { UUID id = 1; string reason = 2; }
+message UnlockIssueRequest { UUID id = 1; }
+
+// ===== AIService =============================================
+
+service AIService {
+  // Task-specific wrappers. Each is an instrumented call to the LLM router.
+  rpc SummarisePR       (SummarisePRRequest)       returns (SummarisePRResponse);
+  rpc ReviewPR          (ReviewPRRequest)          returns (ReviewPRResponse);
+  rpc SuggestLabels     (SuggestLabelsRequest)     returns (SuggestLabelsResponse);
+  rpc ProposeConflictResolution(ProposeConflictRequest) returns (ProposeConflictResponse);
+  rpc SemanticSearch    (SemanticSearchRequest)    returns (SemanticSearchResponse);
+  rpc ChatOps           (ChatOpsRequest)           returns (stream ChatOpsChunk);
+  rpc EmbedText         (EmbedTextRequest)         returns (EmbedTextResponse);
+
+  // Admin
+  rpc ListModels        (ListModelsRequest)        returns (ModelList);
+  rpc GetModel          (GetModelRequest)          returns (Model);
+  rpc SetActiveModel    (SetActiveModelRequest)    returns (Model);
+}
+
+message SummarisePRRequest { UUID pr_id = 1; bool include_risks = 2; }
+message SummarisePRResponse {
+  string summary = 1;
+  repeated string risks = 2;
+  repeated UUID suggested_reviewers = 3;
+  float confidence = 4;
+  string model_version = 5;
+}
+
+message ReviewPRRequest { UUID pr_id = 1; }
+message ReviewPRResponse {
+  repeated InlineComment comments = 1;
+  float confidence = 2;
+  string model_version = 3;
+}
+message InlineComment {
+  string path = 1;
+  int32 line = 2;
+  string suggestion = 3;
+  string rationale = 4;
+  string severity = 5;
+}
+
+message SuggestLabelsRequest {
+  oneof subject {
+    UUID pr_id = 1;
+    UUID issue_id = 2;
+  }
+}
+message SuggestLabelsResponse {
+  repeated string labels = 1;
+  float confidence = 2;
+}
+
+message ProposeConflictRequest {
+  UUID case_id = 1;
+  int32 max_proposals = 2;
+}
+message ProposeConflictResponse {
+  repeated ConflictProposal proposals = 1;
+  string model_version = 2;
+}
+message ConflictProposal {
+  string strategy = 1;
+  bytes apply_plan = 2;
+  string rationale = 3;
+  float confidence = 4;
+  repeated string risks = 5;
+}
+
+message SemanticSearchRequest {
+  string query = 1;
+  UUID org_id = 2;
+  UUID repo_id = 3;
+  repeated string kinds = 4;    // 'code','issue','pr','doc'
+  int32 limit = 5;
+}
+message SemanticSearchResponse {
+  repeated SearchHit hits = 1;
+}
+message SearchHit {
+  string kind = 1;
+  UUID repo_id = 2;
+  string path = 3;
+  string snippet = 4;
+  float score = 5;
+  string url = 6;
+}
+
+message ChatOpsRequest {
+  string session_id = 1;
+  string utterance = 2;
+  UUID org_id = 3;
+  UUID repo_id = 4;
+  repeated string recent_turn_ids = 5;
+}
+message ChatOpsChunk {
+  oneof chunk {
+    string text_delta = 1;
+    ToolCall tool_call = 2;
+    ToolResult tool_result = 3;
+    ChatOpsEnd end = 4;
+  }
+}
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  string arguments_json = 3;
+}
+message ToolResult {
+  string id = 1;
+  string result_json = 2;
+  bool error = 3;
+}
+message ChatOpsEnd {
+  string finish_reason = 1;
+  int32 input_tokens = 2;
+  int32 output_tokens = 3;
+}
+
+message EmbedTextRequest {
+  repeated string texts = 1;
+  string model = 2;
+}
+message EmbedTextResponse {
+  repeated Embedding embeddings = 1;
+  int32 dim = 2;
+  string model_version = 3;
+}
+message Embedding { repeated float values = 1; }
+
+message Model {
+  UUID id = 1;
+  string name = 2;
+  string version = 3;
+  string purpose = 4;
+  string base_model = 5;
+  string adapter_kind = 6;
+  float eval_score = 7;
+  int32 context_window = 8;
+  bool active = 9;
+  bool shadow = 10;
+  google.protobuf.Timestamp created_at = 11;
+}
+message ListModelsRequest { string purpose = 1; }
+message ModelList { repeated Model items = 1; }
+message GetModelRequest { UUID id = 1; }
+message SetActiveModelRequest {
+  string purpose = 1;
+  UUID model_id = 2;
+  bool shadow = 3;
+}

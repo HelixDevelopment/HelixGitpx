@@ -1,0 +1,214 @@
+# policies/k8s/admission-policies.yaml
+# Kyverno ClusterPolicies enforcing supply-chain and runtime guarantees
+# at Kubernetes admission. Applied via Argo CD; audit mode first in
+# staging, enforce mode in production.
+---
+# 1. Verify every image pulled into helixgitpx ns is Cosign-signed.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-require-cosign-signed-images
+  annotations:
+    policies.kyverno.io/title: Require Cosign-signed images
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - name: verify-cosign-keyless
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [helixgitpx, helixgitpx-*]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/vasic-digital/helixgitpx/*"
+          attestors:
+            - count: 1
+              entries:
+                - keyless:
+                    issuer: "https://token.actions.githubusercontent.com"
+                    subject: "https://github.com/vasic-digital/helixgitpx/.github/workflows/release.yaml@refs/heads/main"
+                    rekor:
+                      url: "https://rekor.sigstore.dev"
+          mutateDigest: true
+          required: true
+---
+# 2. Disallow image tags; require digest pinning.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-require-digest-pinning
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: no-mutable-tags
+      match:
+        any:
+          - resources:
+              kinds: [Pod, Deployment, StatefulSet, DaemonSet, Job]
+              namespaces: [helixgitpx]
+      validate:
+        message: "Images must be pinned to a digest (sha256:...)."
+        pattern:
+          spec:
+            =(initContainers):
+              - image: "*@sha256:*"
+            containers:
+              - image: "*@sha256:*"
+---
+# 3. Disallow `latest` image tag anywhere.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-disallow-latest-tag
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: no-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "`:latest` images are not permitted."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+---
+# 4. Require runAsNonRoot + readOnlyRootFilesystem.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-security-context-hardening
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: root-readonlyfs
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [helixgitpx]
+      validate:
+        message: "Containers must run as non-root with a read-only root filesystem."
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  runAsNonRoot: true
+                  readOnlyRootFilesystem: true
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+---
+# 5. Require resource requests & limits; prevents noisy neighbour.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-require-resource-limits
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: require-requests-limits
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [helixgitpx]
+      validate:
+        message: "Resources.requests and .limits are required."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                  limits:
+                    memory: "?*"
+---
+# 6. Labels required on every workload in helixgitpx ns.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-require-standard-labels
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: require-labels
+      match:
+        any:
+          - resources:
+              kinds: [Deployment, StatefulSet, DaemonSet, CronJob, Job]
+              namespaces: [helixgitpx]
+      validate:
+        message: "Standard app.kubernetes.io/* labels are required."
+        pattern:
+          metadata:
+            labels:
+              app.kubernetes.io/name: "?*"
+              app.kubernetes.io/version: "?*"
+              app.kubernetes.io/part-of: "helixgitpx"
+---
+# 7. Block hostPath + hostNetwork + privileged.
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-disallow-host-access
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: no-host-network-or-paths
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [helixgitpx]
+      validate:
+        message: "hostPath, hostNetwork, and privileged are forbidden."
+        pattern:
+          spec:
+            =(hostNetwork): "false"
+            =(hostPID): "false"
+            =(hostIPC): "false"
+            containers:
+              - =(securityContext):
+                  =(privileged): "false"
+            =(volumes):
+              - X(hostPath): "null"
+---
+# 8. Tenant network-policy existence (enforce presence rather than contents).
+apiVersion: kyverno.io/v2beta1
+kind: ClusterPolicy
+metadata:
+  name: helixgitpx-require-netpol
+spec:
+  validationFailureAction: Audit     # audit only; creation covered by GitOps
+  rules:
+    - name: audit-missing-netpol
+      match:
+        any:
+          - resources:
+              kinds: [Namespace]
+              names: [helixgitpx]
+      validate:
+        message: "NetworkPolicy default-deny must exist in namespace."
+        foreach:
+          - list: "request.object"
+            context:
+              - name: netpolCount
+                apiCall:
+                  urlPath: "/apis/networking.k8s.io/v1/namespaces/{{request.object.metadata.name}}/networkpolicies"
+                  jmesPath: "length(items[?metadata.name=='default-deny-all'])"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ netpolCount }}"
+                    operator: LessThan
+                    value: 1

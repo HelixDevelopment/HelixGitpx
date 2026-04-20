@@ -1,0 +1,277 @@
+// proto/helixgitpx/v1/auth.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+option csharp_namespace = "HelixGitpx.V1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "helixgitpx/v1/common.proto";
+
+// ==============================================================
+// AuthService
+// ==============================================================
+service AuthService {
+  // Interactive login
+  rpc Login        (LoginRequest)         returns (LoginResponse);
+  rpc Refresh      (RefreshRequest)       returns (TokenResponse);
+  rpc Logout       (LogoutRequest)        returns (google.protobuf.Empty);
+
+  // Identity
+  rpc GetMe        (GetMeRequest)         returns (User);
+  rpc UpdateMe     (UpdateMeRequest)      returns (User);
+  rpc ValidateToken(ValidateTokenRequest) returns (Principal);
+
+  // MFA
+  rpc EnrollMFA    (EnrollMFARequest)     returns (EnrollMFAResponse);
+  rpc VerifyMFA    (VerifyMFARequest)     returns (TokenResponse);
+  rpc ListMFAFactors(ListMFAFactorsRequest) returns (MFAFactorList);
+  rpc RemoveMFAFactor(RemoveMFAFactorRequest) returns (google.protobuf.Empty);
+
+  // Personal Access Tokens
+  rpc CreatePAT    (CreatePATRequest)     returns (PATResponse);
+  rpc ListPATs     (ListPATsRequest)      returns (PATList);
+  rpc RevokePAT    (RevokePATRequest)     returns (google.protobuf.Empty);
+
+  // Sessions
+  rpc ListSessions (ListSessionsRequest)  returns (SessionList);
+  rpc RevokeSession(RevokeSessionRequest) returns (google.protobuf.Empty);
+
+  // SSO / OIDC management
+  rpc ListIdentityProviders(ListIdPsRequest) returns (IdentityProviderList);
+  rpc StartOIDCFlow(StartOIDCFlowRequest) returns (StartOIDCFlowResponse);
+}
+
+// ==============================================================
+// Messages
+// ==============================================================
+
+message LoginRequest {
+  oneof method {
+    OidcCode oidc = 1;
+    LocalCredential local = 2;
+  }
+  string device_name = 10;
+  string device_id = 11;
+  string user_agent = 12;
+}
+
+message OidcCode {
+  string issuer = 1;
+  string code = 2;
+  string code_verifier = 3;
+  string redirect_uri = 4;
+}
+
+message LocalCredential {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  TokenResponse tokens = 1;
+  User user = 2;
+  bool mfa_required = 3;
+  string mfa_challenge_id = 4;
+  repeated string mfa_methods = 5;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+  string device_id = 2;
+}
+
+message LogoutRequest {
+  string session_id = 1;
+  bool all_sessions = 2;
+}
+
+message TokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp access_token_expires_at = 2;
+  string refresh_token = 3;
+  google.protobuf.Timestamp refresh_token_expires_at = 4;
+  string token_type = 5;
+}
+
+message GetMeRequest {}
+
+message UpdateMeRequest {
+  string display_name = 1;
+  string avatar_url = 2;
+  string locale = 3;
+  string timezone = 4;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message User {
+  UUID id = 1;
+  string email = 2;
+  string username = 3;
+  string display_name = 4;
+  string avatar_url = 5;
+  string locale = 6;
+  string timezone = 7;
+  bool email_verified = 8;
+  bool mfa_enforced = 9;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp last_login_at = 21;
+}
+
+message Principal {
+  User user = 1;
+  repeated string scopes = 2;
+  repeated UUID org_ids = 3;
+  UUID active_org_id = 4;
+  string session_id = 5;
+  google.protobuf.Timestamp expires_at = 6;
+}
+
+// ---------------- MFA ---------------------------------------
+
+message EnrollMFARequest {
+  string kind = 1;             // 'totp' | 'webauthn' | 'recovery'
+  string label = 2;
+}
+
+message EnrollMFAResponse {
+  string factor_id = 1;
+  // TOTP
+  string totp_secret = 10;
+  string totp_qr_data_uri = 11;
+  // WebAuthn
+  bytes webauthn_creation_options = 20;
+  // Recovery
+  repeated string recovery_codes = 30;
+}
+
+message VerifyMFARequest {
+  string mfa_challenge_id = 1;
+  oneof proof {
+    string totp_code = 2;
+    bytes webauthn_assertion = 3;
+    string recovery_code = 4;
+  }
+}
+
+message ListMFAFactorsRequest {}
+
+message MFAFactorList {
+  repeated MFAFactor factors = 1;
+}
+
+message MFAFactor {
+  UUID id = 1;
+  string kind = 2;
+  string label = 3;
+  bool enabled = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp last_used_at = 6;
+}
+
+message RemoveMFAFactorRequest {
+  UUID factor_id = 1;
+}
+
+// ---------------- PAT ---------------------------------------
+
+message CreatePATRequest {
+  string name = 1;
+  repeated string scopes = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message PATResponse {
+  UUID id = 1;
+  string token = 2;             // only returned here, never again
+  string prefix = 3;
+  string name = 4;
+  repeated string scopes = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp expires_at = 7;
+}
+
+message ListPATsRequest {
+  Page page = 1;
+}
+
+message PATList {
+  repeated PATMetadata items = 1;
+  PageResponse page = 2;
+}
+
+message PATMetadata {
+  UUID id = 1;
+  string prefix = 2;
+  string name = 3;
+  repeated string scopes = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp last_used_at = 7;
+}
+
+message RevokePATRequest {
+  UUID id = 1;
+}
+
+// ---------------- Sessions ----------------------------------
+
+message ListSessionsRequest {}
+
+message SessionList {
+  repeated Session items = 1;
+}
+
+message Session {
+  UUID id = 1;
+  string device_name = 2;
+  string user_agent = 3;
+  string ip = 4;
+  string country = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp last_used_at = 7;
+  google.protobuf.Timestamp expires_at = 8;
+  bool current = 9;
+}
+
+message RevokeSessionRequest {
+  UUID session_id = 1;
+}
+
+// ---------------- IdPs --------------------------------------
+
+message ListIdPsRequest {}
+
+message IdentityProviderList {
+  repeated IdentityProvider items = 1;
+}
+
+message IdentityProvider {
+  UUID id = 1;
+  string issuer = 2;
+  string display_name = 3;
+  string auth_endpoint = 4;
+  bool enabled = 5;
+}
+
+message StartOIDCFlowRequest {
+  string issuer = 1;
+  string redirect_uri = 2;
+  repeated string scopes = 3;
+  string device_id = 4;
+}
+
+message StartOIDCFlowResponse {
+  string authorization_url = 1;
+  string state = 2;
+  string code_challenge = 3;
+  string code_verifier = 4; // only returned to trusted clients; never to browser
+}

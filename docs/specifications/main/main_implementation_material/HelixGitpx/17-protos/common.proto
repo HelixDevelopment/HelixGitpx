@@ -1,0 +1,92 @@
+// proto/helixgitpx/v1/common.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+option csharp_namespace = "HelixGitpx.V1";
+option swift_prefix = "HGX";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/any.proto";
+
+// A UUIDv7 identifier carried as its canonical string form.
+message UUID {
+  string value = 1;
+}
+
+// Opaque cursor-based pagination request.
+message Page {
+  int32  page_size  = 1; // 1..200
+  string page_token = 2; // opaque cursor
+  string sort_by    = 3; // e.g. "created_at desc"
+}
+
+// Pagination response payload.
+message PageResponse {
+  string next_page_token = 1;
+  int32  total_count     = 2; // -1 if unknown
+}
+
+// Actor performing an action — a user, service, system, or AI agent.
+message Actor {
+  oneof kind {
+    UUID   user_id      = 1;
+    string service_name = 2;
+    bool   system       = 3;
+    bool   ai           = 4;
+  }
+  string trace_id = 10;
+}
+
+// Structured error detail included in gRPC Status details.
+message ErrorDetail {
+  string              code    = 1;
+  string              message = 2;
+  map<string, string> fields  = 3;
+  string              doc_url = 4;
+}
+
+enum Visibility {
+  VISIBILITY_UNSPECIFIED = 0;
+  VISIBILITY_PUBLIC      = 1;
+  VISIBILITY_PRIVATE     = 2;
+  VISIBILITY_INTERNAL    = 3;
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_OWNER       = 1;
+  ROLE_ADMIN       = 2;
+  ROLE_MAINTAINER  = 3;
+  ROLE_DEVELOPER   = 4;
+  ROLE_VIEWER      = 5;
+}
+
+// Standard envelope for Kafka events — NOT a gRPC message, but
+// referenced here for cross-generation consistency.
+message EventEnvelope {
+  string                       event_id        = 1;
+  string                       event_type      = 2;
+  int32                        schema_version  = 3;
+  google.protobuf.Timestamp    occurred_at     = 4;
+  string                       producer        = 5;
+  string                       trace_id        = 6;
+  string                       span_id         = 7;
+  string                       correlation_id  = 8;
+  string                       causation_id    = 9;
+  string                       tenant_id       = 10;
+  google.protobuf.Any          payload         = 11;
+}
+
+// A page + field mask + filter + sort — shared across list requests.
+message ListOptions {
+  Page                        page        = 1;
+  google.protobuf.FieldMask   fields      = 2;
+  string                      filter      = 3; // AIP-160 syntax
+  repeated string             expand      = 4;
+}

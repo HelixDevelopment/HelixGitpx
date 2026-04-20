@@ -1,0 +1,224 @@
+// proto/helixgitpx/v1/upstream.proto
+// Copyright (c) 2026 vasic-digital. Apache-2.0.
+syntax = "proto3";
+
+package helixgitpx.v1;
+
+option go_package = "github.com/vasic-digital/helixgitpx/gen/go/helixgitpx/v1;helixgitpxv1";
+option java_package = "io.helixgitpx.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "helixgitpx/v1/common.proto";
+
+service UpstreamService {
+  rpc CreateUpstream  (CreateUpstreamRequest)  returns (Upstream);
+  rpc GetUpstream     (GetUpstreamRequest)     returns (Upstream);
+  rpc UpdateUpstream  (UpdateUpstreamRequest)  returns (Upstream);
+  rpc DeleteUpstream  (DeleteUpstreamRequest)  returns (google.protobuf.Empty);
+  rpc ListUpstreams   (ListUpstreamsRequest)   returns (UpstreamList);
+
+  rpc EnableUpstream  (EnableUpstreamRequest)  returns (Upstream);
+  rpc DisableUpstream (DisableUpstreamRequest) returns (Upstream);
+  rpc TestCredentials (TestCredentialsRequest) returns (TestCredentialsResponse);
+  rpc RotateCredentials(RotateCredentialsRequest) returns (Upstream);
+
+  rpc CreateBinding   (CreateBindingRequest)   returns (Binding);
+  rpc GetBinding      (GetBindingRequest)      returns (Binding);
+  rpc UpdateBinding   (UpdateBindingRequest)   returns (Binding);
+  rpc DeleteBinding   (DeleteBindingRequest)   returns (google.protobuf.Empty);
+  rpc ListBindings    (ListBindingsRequest)    returns (BindingList);
+
+  rpc ListProviders   (google.protobuf.Empty)  returns (ProviderList);
+}
+
+enum ProviderKind {
+  PROVIDER_KIND_UNSPECIFIED = 0;
+  GITHUB                    = 1;
+  GITLAB                    = 2;
+  GITEE                     = 3;
+  GITFLIC                   = 4;
+  GITVERSE                  = 5;
+  BITBUCKET                 = 6;
+  GITEA                     = 7;
+  FORGEJO                   = 8;
+  CODEBERG                  = 9;
+  SOURCEHUT                 = 10;
+  AZURE_DEVOPS              = 11;
+  AWS_CODECOMMIT            = 12;
+  GENERIC_GIT               = 13;
+  WASM_PLUGIN               = 99;
+}
+
+enum AuthMethod {
+  AUTH_METHOD_UNSPECIFIED = 0;
+  OAUTH2                  = 1;
+  PAT                     = 2;
+  APP_TOKEN               = 3;
+  SSH_KEY                 = 4;
+  SIGV4                   = 5;
+}
+
+enum HealthStatus {
+  HEALTH_STATUS_UNSPECIFIED = 0;
+  HEALTHY                   = 1;
+  DEGRADED                  = 2;
+  UNHEALTHY                 = 3;
+  UNKNOWN                   = 4;
+}
+
+message Upstream {
+  UUID id = 1;
+  UUID org_id = 2;
+  ProviderKind provider_kind = 3;
+  string display_name = 4;
+  string base_url = 5;
+  AuthMethod auth_method = 6;
+  bool shadow_mode = 7;
+  bool enabled = 8;
+  int32 rate_limit_remaining = 9;
+  HealthStatus health_status = 10;
+  google.protobuf.Timestamp last_health_check_at = 11;
+  ProviderCapabilities capabilities = 12;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+message ProviderCapabilities {
+  bool supports_pull_requests = 1;
+  bool supports_issues = 2;
+  bool supports_releases = 3;
+  bool supports_protected_branches = 4;
+  bool supports_webhooks = 5;
+  bool supports_lfs = 6;
+  bool supports_signed_push = 7;
+  bool supports_status_checks = 8;
+  bool supports_deploy_keys = 9;
+  int32 max_file_size_bytes = 10;
+  int32 default_rate_limit_per_hour = 11;
+  repeated string supported_merge_strategies = 12;
+}
+
+message Binding {
+  UUID id = 1;
+  UUID repo_id = 2;
+  UUID upstream_id = 3;
+  string remote_owner = 4;
+  string remote_name = 5;
+  bool push_enabled = 6;
+  bool pull_enabled = 7;
+  bool sync_issues = 8;
+  bool sync_prs = 9;
+  bool sync_releases = 10;
+  google.protobuf.Timestamp last_synced_at = 11;
+  string last_sync_status = 12;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+// -------------------------------------------------------------
+
+message CreateUpstreamRequest {
+  UUID org_id = 1;
+  ProviderKind provider_kind = 2;
+  string display_name = 3;
+  string base_url = 4;
+  AuthMethod auth_method = 5;
+  // Credential is written directly to Vault via ephemeral unwrap token;
+  // the API never returns the raw value after creation.
+  bytes credential_wrapped = 6;
+  bool shadow_mode = 7;
+}
+
+message GetUpstreamRequest {
+  UUID id = 1;
+}
+
+message UpdateUpstreamRequest {
+  UUID id = 1;
+  string display_name = 2;
+  bool shadow_mode = 3;
+}
+
+message DeleteUpstreamRequest {
+  UUID id = 1;
+  bool revoke_webhooks_on_upstream = 2;
+}
+
+message ListUpstreamsRequest {
+  UUID org_id = 1;
+  ProviderKind provider_kind = 2;
+  Page page = 3;
+}
+message UpstreamList {
+  repeated Upstream items = 1;
+  PageResponse page = 2;
+}
+
+message EnableUpstreamRequest  { UUID id = 1; }
+message DisableUpstreamRequest { UUID id = 1; string reason = 2; }
+
+message TestCredentialsRequest {
+  UUID id = 1;
+}
+message TestCredentialsResponse {
+  bool ok = 1;
+  HealthStatus health = 2;
+  string error_code = 3;
+  string error_message = 4;
+  ProviderCapabilities capabilities = 5;
+}
+
+message RotateCredentialsRequest {
+  UUID id = 1;
+  bytes new_credential_wrapped = 2;
+}
+
+// -------------------------------------------------------------
+
+message CreateBindingRequest {
+  UUID repo_id = 1;
+  UUID upstream_id = 2;
+  string remote_owner = 3;
+  string remote_name = 4;
+  bool create_on_upstream = 5;      // create the remote repo if missing
+  bool import_history = 6;
+}
+
+message GetBindingRequest  { UUID id = 1; }
+message UpdateBindingRequest {
+  UUID id = 1;
+  bool push_enabled = 2;
+  bool pull_enabled = 3;
+  bool sync_issues = 4;
+  bool sync_prs = 5;
+  bool sync_releases = 6;
+}
+message DeleteBindingRequest {
+  UUID id = 1;
+  bool delete_remote = 2;
+}
+message ListBindingsRequest {
+  UUID repo_id = 1;
+  UUID upstream_id = 2;
+  Page page = 3;
+}
+message BindingList {
+  repeated Binding items = 1;
+  PageResponse page = 2;
+}
+
+// -------------------------------------------------------------
+
+message ProviderList {
+  repeated ProviderInfo items = 1;
+}
+message ProviderInfo {
+  ProviderKind kind = 1;
+  string display_name = 2;
+  string website = 3;
+  repeated AuthMethod supported_auth_methods = 4;
+  ProviderCapabilities default_capabilities = 5;
+  bool ga = 6;
+}

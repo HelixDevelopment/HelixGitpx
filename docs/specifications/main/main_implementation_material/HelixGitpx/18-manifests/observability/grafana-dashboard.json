@@ -1,0 +1,302 @@
+{
+  "_comment": "Grafana dashboard — HelixGitpx Service Overview (RED). Imported into Grafana via the kube-prometheus-stack sidecar. Use as a template for per-service dashboards.",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "enable": true,
+        "expr": "ALERTS{alertstate=\"firing\",service=\"${service}\"}",
+        "iconColor": "red",
+        "name": "Firing alerts",
+        "titleFormat": "{{alertname}}",
+        "textFormat": "{{alertname}}"
+      },
+      {
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "enable": true,
+        "expr": "changes(helixgitpx_service_info{service=\"${service}\"}[10m]) > 0",
+        "iconColor": "green",
+        "name": "Deploys",
+        "titleFormat": "Deploy: {{version}}",
+        "textFormat": "commit={{commit_sha}} time={{build_time}}"
+      }
+    ]
+  },
+  "description": "Service RED dashboard (Rate / Errors / Duration) with drill-down to traces.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "title": "HelixGitpx — Service Overview",
+  "uid": "helixgitpx-service-red",
+  "tags": ["helixgitpx", "red", "slo"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus"
+      },
+      {
+        "name": "service",
+        "label": "Service",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(helixgitpx_service_up, service)",
+        "refresh": 1,
+        "includeAll": false,
+        "multi": false,
+        "type": "query"
+      },
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(helixgitpx_service_up{service=\"$service\"}, namespace)",
+        "refresh": 1,
+        "multi": false,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "type": "stat",
+      "title": "Service Up",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "sum(helixgitpx_service_up{service=\"$service\"})", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "DOWN" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "type": "stat",
+      "title": "Version",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "helixgitpx_service_info{service=\"$service\"}",
+          "instant": true,
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": { "reduceOptions": { "fields": "/^version$/", "values": false } }
+    },
+    {
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "type": "stat",
+      "title": "Error Rate (5m)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "helixgitpx:http_error_rate:5m{service=\"$service\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.005 },
+              { "color": "red", "value": 0.02 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "type": "stat",
+      "title": "Latency p99 (5m)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "helixgitpx:http_latency_seconds:p99_5m{service=\"$service\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.3 },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "type": "timeseries",
+      "title": "Request Rate by Code Class",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (code_class) (rate(helixgitpx_http_requests_total{service=\"$service\"}[1m]))",
+          "legendFormat": "{{code_class}}xx",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 6,
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "type": "timeseries",
+      "title": "Latency (p50 / p95 / p99)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(helixgitpx_http_request_duration_seconds_bucket{service=\"$service\"}[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(helixgitpx_http_request_duration_seconds_bucket{service=\"$service\"}[5m])))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(helixgitpx_http_request_duration_seconds_bucket{service=\"$service\"}[5m])))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 13 },
+      "type": "timeseries",
+      "title": "In-flight Requests (HPA signal)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum(helixgitpx_http_requests_in_flight{service=\"$service\"}) by (pod)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 13 },
+      "type": "timeseries",
+      "title": "Replicas + HPA behavior",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "kube_deployment_status_replicas{namespace=\"$namespace\", deployment=\"$service\"}",
+          "legendFormat": "current",
+          "refId": "A"
+        },
+        {
+          "expr": "kube_deployment_spec_replicas{namespace=\"$namespace\", deployment=\"$service\"}",
+          "legendFormat": "desired",
+          "refId": "B"
+        },
+        {
+          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{namespace=\"$namespace\", horizontalpodautoscaler=\"$service\"}",
+          "legendFormat": "hpa max",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 22 },
+      "type": "timeseries",
+      "title": "Error Budget Burn (1h / 6h)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "helixgitpx:slo_burn_rate:api_success:1h",
+          "legendFormat": "1h burn",
+          "refId": "A"
+        },
+        {
+          "expr": "helixgitpx:slo_burn_rate:api_success:6h",
+          "legendFormat": "6h burn",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 6 },
+              { "color": "red", "value": 14.4 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 22 },
+      "type": "table",
+      "title": "Recent Alerts",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "ALERTS{service=\"$service\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

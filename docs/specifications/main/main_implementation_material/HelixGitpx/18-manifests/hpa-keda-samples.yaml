@@ -1,0 +1,177 @@
+# deploy/k8s/samples/autoscaling.yaml
+# Autoscaling manifests for HelixGitpx services.
+#
+# Request-driven services: HorizontalPodAutoscaler on custom metric
+#   grpc_server_inflight_requests (via prometheus-adapter).
+# Event-driven consumers: KEDA ScaledObject on Kafka consumer lag.
+# LLM inference: KEDA on queue depth + GPU utilisation.
+---
+# ====== HPA for request-driven services =====================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: repo-service
+  namespace: helixgitpx
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: repo-service
+  minReplicas: 5
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+    - type: Pods
+      pods:
+        metric:
+          name: grpc_server_inflight_requests
+        target:
+          type: AverageValue
+          averageValue: "30"
+    - type: External
+      external:
+        metric:
+          name: helixgitpx_http_requests_per_second
+          selector:
+            matchLabels:
+              service: repo-service
+        target:
+          type: AverageValue
+          averageValue: "200"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 10
+          periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 25
+          periodSeconds: 60
+      selectPolicy: Min
+---
+# ====== KEDA ScaledObject for Kafka consumer =================
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: kafka-sasl-spire
+  namespace: helixgitpx
+spec:
+  podIdentity:
+    provider: spiffe
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sync-orchestrator
+  namespace: helixgitpx
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: sync-orchestrator
+  minReplicaCount: 5
+  maxReplicaCount: 200
+  pollingInterval: 15
+  cooldownPeriod: 120
+  idleReplicaCount: 5
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+        consumerGroup: sync-orchestrator-main
+        topic: helixgitpx.repo.ref.updated
+        lagThreshold: "1000"
+        offsetResetPolicy: latest
+      authenticationRef:
+        name: kafka-sasl-spire
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+        consumerGroup: sync-orchestrator-main
+        topic: helixgitpx.upstream.webhook.received
+        lagThreshold: "2000"
+      authenticationRef:
+        name: kafka-sasl-spire
+---
+# ====== KEDA ScaledObject for LLM inference =================
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ai-inference-vllm
+  namespace: helixgitpx
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: ai-inference-vllm
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  pollingInterval: 15
+  cooldownPeriod: 300
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.observability:9090
+        metricName: helixgitpx_ai_queue_depth
+        threshold: "5"
+        query: |
+          sum by (service) (helixgitpx_ai_queue_depth{service="ai-inference-vllm"})
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.observability:9090
+        metricName: gpu_utilization
+        threshold: "70"
+        query: |
+          avg by (pod) (nvidia_gpu_duty_cycle{namespace="helixgitpx",pod=~"ai-inference-vllm-.*"})
+---
+# ====== ScaledJob for async fine-tune runs ==================
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: ai-finetune-worker
+  namespace: helixgitpx
+spec:
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: 2
+    template:
+      spec:
+        serviceAccountName: ai-finetune-worker
+        nodeSelector:
+          workload-class: gpu
+        containers:
+          - name: worker
+            image: ghcr.io/vasic-digital/helixgitpx/ai-finetune-worker:1.0.0
+            resources:
+              requests:
+                cpu: "4"
+                memory: "32Gi"
+                nvidia.com/gpu: "1"
+              limits:
+                cpu: "8"
+                memory: "64Gi"
+                nvidia.com/gpu: "1"
+        restartPolicy: Never
+  pollingInterval: 30
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  maxReplicaCount: 5
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+        consumerGroup: ai-finetune
+        topic: helixgitpx.ai.finetune.requested
+        lagThreshold: "1"

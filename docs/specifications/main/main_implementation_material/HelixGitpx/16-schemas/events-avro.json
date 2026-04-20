@@ -1,0 +1,213 @@
+{
+  "_doc": "Canonical Avro event schemas — these live in Karapace under the subjects listed. Loadable via `scripts/register-schemas.sh`.",
+
+  "subjects": {
+
+    "helixgitpx.repo.events.envelope-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events",
+      "name": "Envelope",
+      "doc": "Canonical envelope wrapping every event on every topic. The inner `payload` is itself an Avro-encoded message whose schema is keyed by (event_type, schema_version).",
+      "fields": [
+        {"name": "event_id",        "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "event_type",      "type": "string", "doc": "e.g. 'ref.updated'"},
+        {"name": "schema_version",  "type": "int", "default": 1},
+        {"name": "occurred_at",     "type": {"type": "long", "logicalType": "timestamp-micros"}},
+        {"name": "producer",        "type": "string"},
+        {"name": "trace_id",        "type": ["null","string"], "default": null},
+        {"name": "span_id",         "type": ["null","string"], "default": null},
+        {"name": "correlation_id",  "type": ["null","string"], "default": null},
+        {"name": "causation_id",    "type": ["null","string"], "default": null},
+        {"name": "tenant_id",       "type": ["null","string"], "default": null},
+        {"name": "payload",         "type": "bytes"}
+      ]
+    },
+
+    "helixgitpx.ref.updated-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.ref",
+      "name": "RefUpdated",
+      "fields": [
+        {"name": "repo_id",    "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "ref_name",   "type": "string"},
+        {"name": "old_sha",    "type": ["null","string"], "default": null},
+        {"name": "new_sha",    "type": "string"},
+        {"name": "is_force",   "type": "boolean", "default": false},
+        {"name": "origin",     "type": {"type": "enum", "name": "Origin",
+                                         "symbols": ["LOCAL","UPSTREAM","SYSTEM","AI"]}},
+        {"name": "origin_detail","type": ["null","string"], "default": null},
+        {"name": "actor_id",   "type": ["null","string"], "default": null},
+        {"name": "signed",     "type": "boolean", "default": false},
+        {"name": "signer",     "type": ["null","string"], "default": null}
+      ]
+    },
+
+    "helixgitpx.repo.created-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.repo",
+      "name": "RepoCreated",
+      "fields": [
+        {"name": "repo_id",       "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "org_id",        "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "slug",          "type": "string"},
+        {"name": "display_name",  "type": "string"},
+        {"name": "visibility",    "type": {"type": "enum","name":"Visibility","symbols":["PUBLIC","PRIVATE","INTERNAL"]}},
+        {"name": "default_branch","type": "string", "default": "main"},
+        {"name": "primary_upstream","type": ["null","string"], "default": null},
+        {"name": "creator_id",    "type": {"type": "string", "logicalType": "uuid"}}
+      ]
+    },
+
+    "helixgitpx.sync.completed-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.sync",
+      "name": "SyncCompleted",
+      "fields": [
+        {"name": "job_id",        "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "repo_id",       "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "trigger",       "type": "string"},
+        {"name": "status",        "type": {"type": "enum","name":"JobStatus","symbols":["SUCCESS","PARTIAL","FAILED"]}},
+        {"name": "duration_ms",   "type": "int"},
+        {"name": "steps",         "type": {"type": "array", "items": {
+            "type": "record",
+            "name": "Step",
+            "fields": [
+              {"name": "upstream_id",   "type": ["null","string"], "default": null},
+              {"name": "operation",     "type": "string"},
+              {"name": "status",        "type": "string"},
+              {"name": "error_code",    "type": ["null","string"], "default": null},
+              {"name": "error_message", "type": ["null","string"], "default": null},
+              {"name": "refs_updated",  "type": "int", "default": 0},
+              {"name": "bytes_in",      "type": "long", "default": 0},
+              {"name": "bytes_out",     "type": "long", "default": 0}
+            ]
+        }}}
+      ]
+    },
+
+    "helixgitpx.conflict.detected-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.conflict",
+      "name": "ConflictDetected",
+      "fields": [
+        {"name": "case_id",     "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "repo_id",     "type": {"type": "string", "logicalType": "uuid"}},
+        {"name": "kind",        "type": {"type": "enum","name":"ConflictKind","symbols":[
+            "REF_DIVERGENCE","METADATA_CONCURRENT","RENAME_COLLISION","PR_STATE",
+            "TAG_COLLISION","LFS_DIVERGENCE","WORKFLOW_STATUS","RELEASE_ASSET","OTHER"
+        ]}},
+        {"name": "subject",     "type": "string"},
+        {"name": "upstream_id", "type": ["null","string"], "default": null},
+        {"name": "left_sha",    "type": ["null","string"], "default": null},
+        {"name": "right_sha",   "type": ["null","string"], "default": null},
+        {"name": "base_sha",    "type": ["null","string"], "default": null},
+        {"name": "severity",    "type": {"type": "enum","name":"Severity","symbols":["LOW","NORMAL","HIGH","CRITICAL"]}, "default": "NORMAL"},
+        {"name": "snapshot_ref","type": ["null","string"], "default": null}
+      ]
+    },
+
+    "helixgitpx.conflict.resolved-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.conflict",
+      "name": "ConflictResolved",
+      "fields": [
+        {"name": "case_id",       "type": {"type": "string","logicalType":"uuid"}},
+        {"name": "strategy",      "type": "string"},
+        {"name": "decided_by",    "type": {"type":"enum","name":"DecidedBy","symbols":["POLICY","CRDT","AI","HUMAN"]}},
+        {"name": "actor_id",      "type": ["null","string"], "default": null},
+        {"name": "confidence",    "type": ["null","float"], "default": null},
+        {"name": "applied_steps", "type": "int"},
+        {"name": "duration_ms",   "type": "int"},
+        {"name": "model_version", "type": ["null","string"], "default": null}
+      ]
+    },
+
+    "helixgitpx.pr.merged-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.pr",
+      "name": "PullRequestMerged",
+      "fields": [
+        {"name": "repo_id",      "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "pr_id",        "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "number",       "type": "int"},
+        {"name": "merged_by",    "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "merge_strategy","type": {"type":"enum","name":"MergeStrategy","symbols":["MERGE","SQUASH","REBASE"]}},
+        {"name": "merge_commit", "type": "string"},
+        {"name": "from_ref",     "type": "string"},
+        {"name": "to_ref",       "type": "string"}
+      ]
+    },
+
+    "helixgitpx.issue.opened-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.issue",
+      "name": "IssueOpened",
+      "fields": [
+        {"name": "repo_id", "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "issue_id","type": {"type":"string","logicalType":"uuid"}},
+        {"name": "number",  "type": "int"},
+        {"name": "title",   "type": "string"},
+        {"name": "author_id","type": {"type":"string","logicalType":"uuid"}},
+        {"name": "labels",  "type": {"type":"array","items":"string"}, "default": []}
+      ]
+    },
+
+    "helixgitpx.ai.prompt.run-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.ai",
+      "name": "PromptRun",
+      "fields": [
+        {"name": "run_id",        "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "task",          "type": "string"},
+        {"name": "org_id",        "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "user_id",       "type": ["null","string"], "default": null},
+        {"name": "prompt_version","type": "string"},
+        {"name": "model_name",    "type": "string"},
+        {"name": "model_version", "type": "string"},
+        {"name": "input_tokens",  "type": "int"},
+        {"name": "output_tokens", "type": "int"},
+        {"name": "duration_ms",   "type": "int"},
+        {"name": "confidence",    "type": ["null","float"], "default": null},
+        {"name": "cost_usd",      "type": ["null","double"], "default": null},
+        {"name": "outcome",       "type": ["null","string"], "default": null}
+      ]
+    },
+
+    "helixgitpx.audit.events-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.audit",
+      "name": "AuditEvent",
+      "fields": [
+        {"name": "event_id",      "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "org_id",        "type": ["null","string"], "default": null},
+        {"name": "actor_kind",    "type": {"type":"enum","name":"ActorKind","symbols":["USER","SERVICE","SYSTEM","AI"]}},
+        {"name": "actor_id",      "type": ["null","string"], "default": null},
+        {"name": "action",        "type": "string"},
+        {"name": "resource_kind", "type": "string"},
+        {"name": "resource_id",   "type": ["null","string"], "default": null},
+        {"name": "outcome",       "type": {"type":"enum","name":"Outcome","symbols":["SUCCESS","FAILURE","DENIED"]}},
+        {"name": "ip",            "type": ["null","string"], "default": null},
+        {"name": "user_agent",    "type": ["null","string"], "default": null},
+        {"name": "trace_id",      "type": ["null","string"], "default": null},
+        {"name": "payload_json",  "type": "string", "doc": "JSON-encoded payload; bounded size"}
+      ]
+    },
+
+    "helixgitpx.billing.usage-value": {
+      "type": "record",
+      "namespace": "io.helixgitpx.events.billing",
+      "name": "UsageRecord",
+      "fields": [
+        {"name": "org_id",     "type": {"type":"string","logicalType":"uuid"}},
+        {"name": "meter",      "type": "string"},
+        {"name": "units",      "type": "long"},
+        {"name": "unit_type",  "type": "string"},
+        {"name": "period_month","type": {"type":"int","logicalType":"date"}},
+        {"name": "recorded_at","type": {"type":"long","logicalType":"timestamp-micros"}}
+      ]
+    }
+  },
+
+  "compatibility": "BACKWARD",
+  "registration_note": "Use `scripts/register-schemas.sh` to register / update subjects. Breaking changes require a new topic with `.v2` suffix per ADR-0018."
+}
