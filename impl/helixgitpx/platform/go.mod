@@ -6,6 +6,7 @@ toolchain go1.23.4
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/open-policy-agent/opa v0.70.0
 	github.com/pressly/goose/v3 v3.22.1
