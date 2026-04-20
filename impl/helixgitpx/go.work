@@ -7,5 +7,6 @@ use (
 	./platform
 	./services/auth
 	./services/hello
+	./services/orgteam
 	./tools/scaffold
 )
