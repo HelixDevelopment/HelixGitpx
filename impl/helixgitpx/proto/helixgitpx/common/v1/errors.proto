@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package helixgitpx.common.v1;
+
+// Problem mirrors the RFC 7807 problem-details payload used by HelixGitpx REST
+// responses. gRPC clients receive equivalent information via status details.
+message Problem {
+  string type = 1;
+  string title = 2;
+  int32 status = 3;
+  string detail = 4;
+  string instance = 5;
+  string domain = 6;
+  string code = 7;
+  map<string, string> errors = 8;
+}

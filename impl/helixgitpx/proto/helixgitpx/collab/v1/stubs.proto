@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package helixgitpx.collab.v1;
+
+// Stub placeholder — real messages and services land in the milestone owning this domain.
+// See proto/README.md for the M1 → Mx ownership table.
+message Placeholder {
+  string reserved = 1;
+}

@@ -1,0 +1,29 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/helixgitpx/helixgitpx/gen/go
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: ../gen/go
+    opt: paths=source_relative
+  - remote: buf.build/grpc/go
+    out: ../gen/go
+    opt: paths=source_relative,require_unimplemented_servers=false
+  - remote: buf.build/connectrpc/go
+    out: ../gen/go
+    opt: paths=source_relative
+  - remote: buf.build/bufbuild/es
+    out: ../../helixgitpx-web/libs/proto/src
+    opt: target=ts
+  - remote: buf.build/connectrpc/es
+    out: ../../helixgitpx-web/libs/proto/src
+    opt: target=ts
+  - remote: buf.build/grpc/kotlin
+    out: ../../helixgitpx-clients/shared/src/commonMain/kotlin/gen
+  - remote: buf.build/apple/swift
+    out: ../../helixgitpx-clients/iosApp/Gen
+  - remote: buf.build/grpc-ecosystem/openapiv2
+    out: ../api/openapi
+    opt: output_format=json,logtostderr=true

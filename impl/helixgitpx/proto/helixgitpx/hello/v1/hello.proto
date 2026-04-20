@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package helixgitpx.hello.v1;
+
+import "google/api/annotations.proto";
+
+// HelloService is the spine service for M1 Foundation.
+// It exercises platform/{grpc,gin,pg,redis,kafka} end-to-end.
+service HelloService {
+  // SayHello returns a greeting and (as a side effect) increments a counter
+  // in Postgres, caches the last greeting in Redis, and emits hello.said to Kafka.
+  rpc SayHello(SayHelloRequest) returns (SayHelloResponse) {
+    option (google.api.http) = {
+      get: "/v1/hello"
+    };
+  }
+}
+
+message SayHelloRequest {
+  string name = 1;
+}
+
+message SayHelloResponse {
+  string greeting = 1;
+  int64 count = 2;
+}
