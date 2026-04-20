@@ -1,0 +1,49 @@
+name: supply-chain
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        type: string
+        default: main
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+      - uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sboms
+          path: "sbom.*.json"
+  cosign:
+    runs-on: ubuntu-latest
+    if: ${{ env.COSIGN_PASSWORD != '' }}
+    env:
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - run: echo "cosign-ready"
+  slsa-provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'impl/helixgitpx/services/*/deploy/Dockerfile'

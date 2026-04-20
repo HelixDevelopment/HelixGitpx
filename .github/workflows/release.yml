@@ -1,0 +1,36 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+      dry-run:
+        type: boolean
+        default: true
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate version
+        run: |
+          case "${{ inputs.version }}" in
+            v*.*.*) echo ok ;;
+            *) echo "expected semver vMAJOR.MINOR.PATCH"; exit 1 ;;
+          esac
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+      - name: Build images (dry-run if requested)
+        run: echo "dry-run=${{ inputs.dry-run }} version=${{ inputs.version }}"
+      - name: GitHub Release
+        if: ${{ !inputs.dry-run }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          generate_release_notes: true

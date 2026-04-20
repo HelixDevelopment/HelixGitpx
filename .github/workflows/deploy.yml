@@ -1,0 +1,37 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [dev, staging, prod-eu]
+        default: dev
+      service:
+        type: string
+        default: all
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vault OIDC login (if configured)
+        if: ${{ env.VAULT_ADDR != '' }}
+        uses: hashicorp/vault-action@v3
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: jwt
+          role: gha-deploy
+          secrets: |
+            kv/data/deploy KUBECONFIG | KUBECONFIG ;
+      - name: Skip if vault unset
+        if: ${{ env.VAULT_ADDR == '' }}
+        run: echo "VAULT_ADDR unset — skipping kubeconfig fetch (activation planned for M2)"
+      - name: Argo CD sync (stub in M1)
+        run: |
+          echo "Would invoke: argocd app sync helixgitpx-${{ inputs.environment }} --service=${{ inputs.service }}"

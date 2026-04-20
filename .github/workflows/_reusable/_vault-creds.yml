@@ -1,0 +1,28 @@
+name: _vault-creds
+on:
+  workflow_call:
+    inputs:
+      role:
+        type: string
+        required: true
+      secrets-path:
+        type: string
+        required: true
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Vault OIDC exchange
+        if: ${{ env.VAULT_ADDR != '' }}
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: jwt
+          role: ${{ inputs.role }}
+          secrets: ${{ inputs.secrets-path }}
+      - name: Skip
+        if: ${{ env.VAULT_ADDR == '' }}
+        run: echo "VAULT_ADDR unset — skipping"

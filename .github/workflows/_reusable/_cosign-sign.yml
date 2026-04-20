@@ -1,0 +1,23 @@
+name: _cosign-sign
+on:
+  workflow_call:
+    inputs:
+      image:
+        type: string
+        required: true
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      packages: write
+    steps:
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign
+        if: ${{ env.COSIGN_PASSWORD != '' }}
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: cosign sign --yes "${{ inputs.image }}"
+      - name: Skip
+        if: ${{ env.COSIGN_PASSWORD == '' }}
+        run: echo "COSIGN_PASSWORD unset — skipping"

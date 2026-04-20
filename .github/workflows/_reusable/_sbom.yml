@@ -1,0 +1,16 @@
+name: _sbom
+on:
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        required: true
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anchore/sbom-action@v0
+        with:
+          path: ${{ inputs.target }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
