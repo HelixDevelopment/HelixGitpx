@@ -1,9 +1,14 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "helixgitpx/repo/v1/stubs.proto",
+    "title": "helixgitpx/upstream/v1/upstream.proto",
     "version": "version not set"
   },
+  "tags": [
+    {
+      "name": "UpstreamService"
+    }
+  ],
   "consumes": [
     "application/json"
   ],
