@@ -1,0 +1,19 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-signed-images
+spec:
+  validationFailureAction: Audit
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: cosign-signed
+      match:
+        any:
+          - resources: { kinds: [Pod] }
+      verifyImages:
+        - imageReferences: ["ghcr.io/helixgitpx/*"]
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/helixgitpx/*"
+                    issuer: "https://token.actions.githubusercontent.com"

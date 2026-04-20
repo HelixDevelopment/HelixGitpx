@@ -1,0 +1,11 @@
+framework:
+  - terraform
+  - kubernetes
+  - dockerfile
+  - github_actions
+  - helm
+skip-check:
+  # Noisy checks for a docs-first repo; revisit in M8 hardening.
+  - CKV_K8S_35   # credentials in env vars (dev compose uses plaintext)
+output: cli
+soft-fail: false

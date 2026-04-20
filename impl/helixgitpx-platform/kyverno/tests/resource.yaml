@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata: { name: evil }
+spec:
+  containers:
+    - name: c
+      image: busybox
+      securityContext: { privileged: true }
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: nice }
+spec:
+  containers:
+    - name: c
+      image: busybox
+      securityContext: { privileged: false }
