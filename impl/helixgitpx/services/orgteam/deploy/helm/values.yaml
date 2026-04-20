@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/orgteam
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  ORGTEAM_HTTP_ADDR: ":8003"
+  ORGTEAM_GRPC_ADDR: ":9003"
+  ORGTEAM_HEALTH_ADDR: ":8083"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/orgteam
+    tag: dev
+  env:
+    - name: ORGTEAM_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: orgteam-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: orgteam.helix.local
+  tlsSecret: orgteam-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: orgteam
+  kvPath: kv/orgteam
