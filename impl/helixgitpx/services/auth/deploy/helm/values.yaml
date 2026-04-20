@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/auth
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  AUTH_HTTP_ADDR: ":8002"
+  AUTH_GRPC_ADDR: ":9002"
+  AUTH_HEALTH_ADDR: ":8082"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/auth
+    tag: dev
+  env:
+    - name: AUTH_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: auth-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: auth.helix.local
+  tlsSecret: auth-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: auth
+  kvPath: kv/auth
