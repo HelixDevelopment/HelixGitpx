@@ -24,7 +24,9 @@ message ExchangeOIDCRequest {
   string redirect_uri = 3;
 }
 
-message RefreshTokenRequest { string refresh_token = 1; }
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
 
 message Tokens {
   string access_token = 1;
@@ -55,20 +57,34 @@ message PAT {
   google.protobuf.Timestamp expires_at = 6;
 }
 
-message RevokePATRequest { string id = 1; }
-message ListPATsResponse { repeated PAT pats = 1; }
+message RevokePATRequest {
+  string id = 1;
+}
+message ListPATsResponse {
+  repeated PAT pats = 1;
+}
 
-message EnrollTOTPResponse { string otpauth_url = 1; string secret = 2; }
+message EnrollTOTPResponse {
+  string otpauth_url = 1;
+  string secret = 2;
+}
 
-message EnrollFIDO2Request { bytes attestation = 1; }
-message EnrollFIDO2Response { bytes public_key = 1; string id = 2; }
+message EnrollFIDO2Request {
+  bytes attestation = 1;
+}
+message EnrollFIDO2Response {
+  bytes public_key = 1;
+  string id = 2;
+}
 
 message VerifyMFARequest {
   string factor_id = 1;
   string totp_code = 2;
   bytes fido2_assertion = 3;
 }
-message MFAVerification { bool verified = 1; }
+message MFAVerification {
+  bool verified = 1;
+}
 
 message Session {
   string id = 1;
@@ -77,5 +93,9 @@ message Session {
   string user_agent = 4;
   string ip = 5;
 }
-message ListSessionsResponse { repeated Session sessions = 1; }
-message RevokeSessionRequest { string id = 1; }
+message ListSessionsResponse {
+  repeated Session sessions = 1;
+}
+message RevokeSessionRequest {
+  string id = 1;
+}

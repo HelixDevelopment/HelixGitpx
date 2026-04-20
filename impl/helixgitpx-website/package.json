@@ -1,0 +1,26 @@
+{
+  "name": "helixgitpx-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HelixGitpx enterprise marketing website (helixgitpx.io)",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "5.1.1",
+    "@astrojs/tailwind": "5.1.4",
+    "@astrojs/sitemap": "3.2.1",
+    "@astrojs/rss": "4.0.11",
+    "tailwindcss": "3.4.17",
+    "@fontsource/inter": "5.1.0",
+    "@fontsource/jetbrains-mono": "5.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "typescript": "5.6.3"
+  },
+  "engines": { "node": ">=20" }
+}

@@ -38,6 +38,7 @@ impl/helixgitpx-web/node_modules/
 impl/helixgitpx-web/dist/
 impl/helixgitpx-web/.angular/
 impl/helixgitpx-web/.nx/
+impl/helixgitpx-web/coverage/
 impl/helixgitpx-web/package-lock.json
 
 # Docs site artifacts
@@ -54,3 +55,15 @@ impl/helixgitpx-clients/**/.gradle/
 
 # Built binaries in source tree
 impl/helixgitpx/tools/scaffold/scaffold
+
+# Marketing website build
+impl/helixgitpx-website/node_modules/
+impl/helixgitpx-website/dist/
+impl/helixgitpx-website/package-lock.json
+impl/helixgitpx-website/.astro/
+
+# Manual build outputs (regenerate from src/)
+docs/manuals/dist/
+
+# Coverage reports (regenerate from tests)
+tools/coverage-audit/reports/

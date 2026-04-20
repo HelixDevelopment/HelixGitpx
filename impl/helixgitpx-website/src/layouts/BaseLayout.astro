@@ -1,0 +1,101 @@
+---
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/jetbrains-mono/400.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props as Props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title} — HelixGitpx</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).toString()} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body class="min-h-screen bg-white text-secondary antialiased">
+    <header class="border-b border-slate-200">
+      <div class="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
+        <a href="/" class="flex items-center gap-2 font-semibold">
+          <span class="h-6 w-6 rounded bg-primary"></span>
+          HelixGitpx
+        </a>
+        <nav class="flex gap-6 text-sm">
+          <a href="/why" class="hover:text-primary">Why</a>
+          <a href="/features" class="hover:text-primary">Features</a>
+          <a href="/pricing" class="hover:text-primary">Pricing</a>
+          <a href="/customers" class="hover:text-primary">Customers</a>
+          <a href="https://docs.helixgitpx.io" class="hover:text-primary">Docs</a>
+          <a href="/contact" class="hover:text-primary">Contact</a>
+        </nav>
+        <a href="/signup" class="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          Start free
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="border-t border-slate-200 mt-24">
+      <div class="mx-auto max-w-7xl px-6 py-12 grid grid-cols-2 md:grid-cols-5 gap-8 text-sm">
+        <div>
+          <div class="font-semibold mb-2">Product</div>
+          <ul class="space-y-1 text-slate-600">
+            <li><a href="/features" class="hover:text-primary">Features</a></li>
+            <li><a href="/pricing" class="hover:text-primary">Pricing</a></li>
+            <li><a href="/changelog" class="hover:text-primary">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">Developers</div>
+          <ul class="space-y-1 text-slate-600">
+            <li><a href="https://docs.helixgitpx.io" class="hover:text-primary">Docs</a></li>
+            <li><a href="https://github.com/HelixGitpx" class="hover:text-primary">GitHub</a></li>
+            <li><a href="/api" class="hover:text-primary">API</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">Company</div>
+          <ul class="space-y-1 text-slate-600">
+            <li><a href="/about" class="hover:text-primary">About</a></li>
+            <li><a href="/careers" class="hover:text-primary">Careers</a></li>
+            <li><a href="/press" class="hover:text-primary">Press</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">Trust</div>
+          <ul class="space-y-1 text-slate-600">
+            <li><a href="/trust" class="hover:text-primary">Trust center</a></li>
+            <li><a href="/security" class="hover:text-primary">Security</a></li>
+            <li><a href="https://status.helixgitpx.io" class="hover:text-primary">Status</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">Legal</div>
+          <ul class="space-y-1 text-slate-600">
+            <li><a href="/terms" class="hover:text-primary">Terms</a></li>
+            <li><a href="/privacy" class="hover:text-primary">Privacy</a></li>
+            <li><a href="/dpa" class="hover:text-primary">DPA</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-slate-200">
+        <div class="mx-auto max-w-7xl px-6 py-6 text-xs text-slate-500 flex justify-between">
+          <span>© 2026 HelixGitpx.</span>
+          <span>Made with &lt;3 by HelixDevelopment.</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

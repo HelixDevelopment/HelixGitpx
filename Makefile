@@ -74,3 +74,51 @@ clean: ## Remove build artifacts (keeps compose volumes)
 	cd impl/helixgitpx-web && rm -rf dist .nx
 	cd impl/helixgitpx-clients && ./gradlew clean || true
 	cd impl/helixgitpx-docs && rm -rf build .docusaurus
+
+# ---------------------------------------------------------------------------
+# Test matrix (Constitution Article II).
+# All seven types are mandatory. Mocks are allowed ONLY in test-unit.
+# ---------------------------------------------------------------------------
+
+.PHONY: test-unit test-integration test-e2e test-security test-stress test-ddos test-benchmark test-all
+test-unit: ## Run unit tests (mocks allowed)
+	cd impl/helixgitpx && GOTOOLCHAIN=go1.23.4 go test -race -cover ./...
+	cd impl/helixgitpx-web && npx nx test web --watchAll=false
+	cd impl/helixgitpx-clients && gradle :shared:jvmTest || true
+
+test-integration: ## Run integration tests (compose must be up)
+	cd test/integration && GOTOOLCHAIN=go1.23.4 go test -tags=integration -v ./...
+
+test-e2e: ## Run end-to-end tests (k3d must be up)
+	cd impl/helixgitpx-web && npx playwright test
+
+test-security: ## Run security scans
+	bash test/security/run.sh
+
+test-stress: ## Run stress scenarios (k6 required)
+	cd tools/perf && make all
+
+test-ddos: ## Run ddos / rate-limit scenarios
+	bash test/ddos/run.sh
+
+test-benchmark: ## Run Go micro-benchmarks and k6 budget scenarios
+	cd impl/helixgitpx && GOTOOLCHAIN=go1.23.4 go test -run='^$$' -bench=. -benchmem ./...
+	cd tools/perf && python3 check_budgets.py /tmp/k6-out-*.json budgets.json || true
+
+test-all: test-unit test-integration test-e2e test-security test-stress test-ddos test-benchmark ## Run all seven mandatory test types
+	@echo "All seven required test types executed."
+
+.PHONY: coverage-audit
+coverage-audit: ## Per-package coverage audit; fails below threshold
+	bash tools/coverage-audit/audit.sh
+
+# ---------------------------------------------------------------------------
+# Upstream federation (Constitution Article IV §2).
+# ---------------------------------------------------------------------------
+
+.PHONY: upstream-push upstream-status
+upstream-push: ## Push main + tags to ALL configured upstreams
+	bash scripts/push-to-all-upstreams.sh
+
+upstream-status: ## Show divergence for each configured upstream
+	bash scripts/upstream-status.sh

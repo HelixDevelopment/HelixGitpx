@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Trust center" description="Security posture, certifications, audits, and real-time status.">
+  <section class="mx-auto max-w-5xl px-6 py-16">
+    <h1 class="text-5xl font-semibold">Trust center</h1>
+    <p class="mt-4 text-slate-600">Security, compliance, and transparency. Current posture as of release v1.0.</p>
+
+    <div class="mt-12 grid md:grid-cols-2 gap-6">
+      <a href="https://status.helixgitpx.io" class="rounded-xl border border-slate-200 p-6 hover:border-primary">
+        <div class="text-sm uppercase tracking-wider text-slate-500">Realtime</div>
+        <div class="mt-2 text-xl font-semibold">Status page</div>
+        <div class="mt-2 text-sm text-slate-600">Per-service uptime, current incidents, scheduled maintenance.</div>
+      </a>
+      <a href="/security" class="rounded-xl border border-slate-200 p-6 hover:border-primary">
+        <div class="text-sm uppercase tracking-wider text-slate-500">Policy</div>
+        <div class="mt-2 text-xl font-semibold">Security policy</div>
+        <div class="mt-2 text-sm text-slate-600">Incident response, data classification, retention, and disclosure.</div>
+      </a>
+    </div>
+
+    <h2 class="mt-16 text-2xl font-semibold">Certifications & audits</h2>
+    <ul class="mt-4 space-y-3 text-slate-700">
+      <li><span class="inline-block w-24 text-sm text-slate-500">SOC 2 Type I</span> Report available under NDA.</li>
+      <li><span class="inline-block w-24 text-sm text-slate-500">ISO 27001</span> Gap analysis complete; certification in progress.</li>
+      <li><span class="inline-block w-24 text-sm text-slate-500">Pen-test</span> Annual external third-party; most recent 2026 Q2.</li>
+      <li><span class="inline-block w-24 text-sm text-slate-500">Bug bounty</span> Live on <a href="https://hackerone.com/helixgitpx" class="text-primary hover:underline">HackerOne</a>.</li>
+    </ul>
+
+    <h2 class="mt-16 text-2xl font-semibold">Sub-processors</h2>
+    <p class="mt-2 text-slate-600">Current list: <a href="/subprocessors" class="text-primary hover:underline">/subprocessors</a>. We notify customers 30 days before adding or removing one.</p>
+
+    <h2 class="mt-16 text-2xl font-semibold">Data residency</h2>
+    <p class="mt-2 text-slate-600">Per-org residency toggle (EU / UK / US). Data stays in the region you pick.</p>
+
+    <h2 class="mt-16 text-2xl font-semibold">Report a vulnerability</h2>
+    <p class="mt-2 text-slate-600">
+      Public: HackerOne (rewards up to $25 000). Private: <a href="mailto:security@helixgitpx.io" class="text-primary hover:underline">security@helixgitpx.io</a>.
+    </p>
+  </section>
+</BaseLayout>

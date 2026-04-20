@@ -2,16 +2,48 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Authority order:** the [Constitution](./CONSTITUTION.md) is the supreme
+policy document. Per-agent instructions are in [`AGENTS.md`](./AGENTS.md).
+CLAUDE.md (this file) is a Claude-specific orientation guide — it does not
+override the Constitution or AGENTS.md.
+
+## Hard rules (from the Constitution)
+
+1. **Testing** — every module carries tests in all seven required types:
+   unit, integration, e2e, security, stress, ddos, benchmark. Only unit
+   tests may use mocks, stubs, placeholder classes, or hardcoded data.
+   No test may be skipped, disabled, broken, or flaky. Target coverage is
+   100 % per type per module touched. See Article II of the Constitution.
+2. **CI is workflow_dispatch-only.** No push / pull_request / schedule
+   triggers are permitted. Mandatory.
+3. **Container runtime is portable** — auto-detect docker vs podman; never
+   hardcode either one.
+4. **Upstream federation is regular** — every change on `main` is pushed to
+   all configured upstreams (GitHub, GitLab, GitFlic, GitVerse, …) via
+   `Upstreams/<target>.sh` scripts. Daily cadence minimum.
+5. **Documentation is source** — every feature ships with HTML + PDF + ePub
+   + Markdown + plain-text documentation under `docs/`.
+
 ## Repository Status
 
-**This repo currently contains specifications and documentation only — no implementation code has been checked in yet.** The `.gitignore` is Go-oriented in anticipation of the planned backend, but no `go.mod`, services, or build system exists at the root. Do not fabricate build/test commands; if asked to build or run something, first confirm with the user where the implementation lives (it may be in a separate repo).
+Implementation code lives under `impl/` (Go monorepo, Angular web app, KMP
+clients, Helm/Argo/Kustomize platform manifests). The repo is GA-tagged
+(`v1.0.0`, milestones `m1-foundation` through `m8-ga`). Do not claim code is
+missing if it is present under `impl/`.
 
 ## What's Here
 
 - `README.md` — one-line project description (`HelixGitpx — Helix Git Proxy eXtended`).
-- `Upstreams/` — four executable bash scripts (`GitHub.sh`, `GitLab.sh`, `GitFlic.sh`, `GitVerse.sh`), each exporting `UPSTREAMABLE_REPOSITORY` to a different Git host. These configure this repo's own multi-upstream mirroring (the project practices the federation pattern it specifies). When adding a new mirror target, create a matching script; don't hardcode remotes elsewhere.
+- `CONSTITUTION.md` — **supreme** policy doc. Read it.
+- `AGENTS.md` — agent-specific rules. Read it.
+- `Upstreams/` — executable bash scripts (`GitHub.sh`, `GitLab.sh`, `GitFlic.sh`, `GitVerse.sh`), each exporting `UPSTREAMABLE_REPOSITORY` to a different Git host. Per Constitution Article IV §2, every change on `main` is pushed to all of them.
+- `impl/helixgitpx/` — Go monorepo (platform + 18 services + gen + tools/scaffold).
+- `impl/helixgitpx-web/` — Angular 19 + Nx web app.
+- `impl/helixgitpx-clients/` — KMP + Compose shells (Android/iOS/Desktop).
+- `impl/helixgitpx-platform/` — Helm charts, Argo apps, Kustomize overlays, SQL, OPA.
+- `impl/helixgitpx-docs-site/` — Docusaurus public docs.
 - `docs/specifications/main/Git_Proxy_Master_Specification.md` + `.PDF` — the prior master spec (v4.0.0), **superseded** by the suite under `main_implementation_material/HelixGitpx/` but kept for provenance.
-- `docs/specifications/main/main_implementation_material/HelixGitpx/` — the authoritative, implementation-ready documentation suite (v1.0.0, `APPROVED`). Also shipped as `.zip`/`.7z` alongside — keep these in sync if the directory changes.
+- `docs/specifications/main/main_implementation_material/HelixGitpx/` — the authoritative, implementation-ready documentation suite. Also shipped as `.zip`/`.7z` alongside — keep these in sync if the directory changes.
 
 ## Working With the Specification Suite
 

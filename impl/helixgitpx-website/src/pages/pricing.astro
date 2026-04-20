@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const plans = [
+  {
+    name: 'Free',
+    price: '$0',
+    per: 'forever',
+    desc: 'For individuals and OSS.',
+    features: ['3 orgs', '10 private repos', '2 upstream bindings', 'Community support'],
+    cta: 'Start free',
+    href: '/signup',
+  },
+  {
+    name: 'Team',
+    price: '$12',
+    per: 'per user / month',
+    desc: 'For working teams.',
+    features: ['Unlimited orgs', 'Unlimited repos', 'All 12 upstream providers', 'AI assist on', 'Priority email support'],
+    cta: 'Start Team',
+    href: '/signup?plan=team',
+    featured: true,
+  },
+  {
+    name: 'Scale',
+    price: '$28',
+    per: 'per user / month',
+    desc: 'For growing orgs.',
+    features: ['Everything in Team', 'SSO / SAML', 'Audit log retention 2 y', 'Slack / Teams connect', '99.95 % SLO'],
+    cta: 'Start Scale',
+    href: '/signup?plan=scale',
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    per: 'billed annually',
+    desc: 'For regulated industries.',
+    features: ['Self-host option', 'Residency control', 'Custom SLAs', 'SOC 2 evidence', 'Named TAM', 'Priority phone'],
+    cta: 'Contact sales',
+    href: '/contact?type=enterprise',
+  },
+];
+---
+<BaseLayout title="Pricing" description="Free for individuals and OSS; per-seat for teams; contact sales for enterprise.">
+  <section class="mx-auto max-w-7xl px-6 pt-16 pb-24">
+    <h1 class="text-center text-5xl font-semibold">Plans that scale with you</h1>
+    <p class="mt-4 text-center text-slate-600">Start free. Upgrade when you need SSO, compliance, or self-hosting.</p>
+
+    <div class="mt-12 grid md:grid-cols-4 gap-6">
+      {plans.map((p) => (
+        <div class={`rounded-2xl border p-8 ${p.featured ? 'border-primary shadow-xl' : 'border-slate-200'}`}>
+          {p.featured && <div class="mb-3 text-xs font-medium text-primary uppercase tracking-wider">Most popular</div>}
+          <div class="text-lg font-semibold">{p.name}</div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-semibold">{p.price}</span>
+            <span class="text-sm text-slate-500">{p.per}</span>
+          </div>
+          <p class="mt-2 text-sm text-slate-600">{p.desc}</p>
+          <ul class="mt-6 space-y-2 text-sm">
+            {p.features.map((f) => (
+              <li class="flex gap-2">
+                <span class="text-success">✓</span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <a href={p.href} class={`mt-8 block rounded px-4 py-2 text-center text-sm font-medium ${p.featured ? 'bg-primary text-white hover:bg-blue-700' : 'border border-slate-300 hover:border-primary'}`}>
+            {p.cta}
+          </a>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-3xl px-6 pb-24 text-sm text-slate-600">
+    <h2 class="text-xl font-semibold text-secondary mb-4">FAQ</h2>
+    <details class="border-t border-slate-200 py-3">
+      <summary class="cursor-pointer font-medium text-secondary">Can I self-host?</summary>
+      <p class="mt-2">Yes, on Enterprise. The full Helm chart set is at <code>impl/helixgitpx-platform/helm/</code>.</p>
+    </details>
+    <details class="border-t border-slate-200 py-3">
+      <summary class="cursor-pointer font-medium text-secondary">What happens if a provider goes down?</summary>
+      <p class="mt-2">Your code is already on every other bound host. Pushes queue until the provider recovers, then drain automatically.</p>
+    </details>
+    <details class="border-t border-slate-200 py-3">
+      <summary class="cursor-pointer font-medium text-secondary">Can I leave?</summary>
+      <p class="mt-2">Any time. Your repos are plain Git on every bound host. HelixGitpx is a proxy, not a vault.</p>
+    </details>
+  </section>
+</BaseLayout>

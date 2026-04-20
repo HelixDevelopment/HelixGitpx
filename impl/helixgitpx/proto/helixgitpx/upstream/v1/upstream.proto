@@ -8,13 +8,13 @@ enum Provider {
   PROVIDER_UNSPECIFIED = 0;
   PROVIDER_GITHUB = 1;
   PROVIDER_GITLAB = 2;
-  PROVIDER_GITEA  = 3;
+  PROVIDER_GITEA = 3;
 }
 
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
-  DIRECTION_PUSH   = 1;
-  DIRECTION_FETCH  = 2;
+  DIRECTION_PUSH = 1;
+  DIRECTION_FETCH = 2;
   DIRECTION_MIRROR = 3;
 }
 
@@ -47,12 +47,40 @@ message Binding {
   google.protobuf.Timestamp last_sync_at = 5;
 }
 
-message CreateUpstreamRequest { string slug = 1; Provider provider = 2; string base_url = 3; string vault_path = 4; }
-message GetUpstreamRequest    { string slug = 1; }
-message UpdateUpstreamRequest { string slug = 1; string base_url = 2; string vault_path = 3; }
-message DeleteUpstreamRequest { string slug = 1; }
-message ListUpstreamsResponse { repeated Upstream upstreams = 1; }
-message BindRequest           { string repo_id = 1; string upstream_id = 2; string remote_name = 3; Direction direction = 4; }
-message UnbindRequest         { string repo_id = 1; string upstream_id = 2; string remote_name = 3; }
-message ListBindingsRequest   { string repo_id = 1; }
-message ListBindingsResponse  { repeated Binding bindings = 1; }
+message CreateUpstreamRequest {
+  string slug = 1;
+  Provider provider = 2;
+  string base_url = 3;
+  string vault_path = 4;
+}
+message GetUpstreamRequest {
+  string slug = 1;
+}
+message UpdateUpstreamRequest {
+  string slug = 1;
+  string base_url = 2;
+  string vault_path = 3;
+}
+message DeleteUpstreamRequest {
+  string slug = 1;
+}
+message ListUpstreamsResponse {
+  repeated Upstream upstreams = 1;
+}
+message BindRequest {
+  string repo_id = 1;
+  string upstream_id = 2;
+  string remote_name = 3;
+  Direction direction = 4;
+}
+message UnbindRequest {
+  string repo_id = 1;
+  string upstream_id = 2;
+  string remote_name = 3;
+}
+message ListBindingsRequest {
+  string repo_id = 1;
+}
+message ListBindingsResponse {
+  repeated Binding bindings = 1;
+}

@@ -47,14 +47,42 @@ message CreateTeamRequest {
   string slug = 3;
   string name = 4;
 }
-message GetTeamRequest    { string id = 1; }
-message UpdateTeamRequest { string id = 1; string name = 2; string parent_id = 3; }
-message DeleteTeamRequest { string id = 1; }
-message ListTeamsRequest  { string org_id = 1; string under_parent_id = 2; }
-message ListTeamsResponse { repeated Team teams = 1; }
+message GetTeamRequest {
+  string id = 1;
+}
+message UpdateTeamRequest {
+  string id = 1;
+  string name = 2;
+  string parent_id = 3;
+}
+message DeleteTeamRequest {
+  string id = 1;
+}
+message ListTeamsRequest {
+  string org_id = 1;
+  string under_parent_id = 2;
+}
+message ListTeamsResponse {
+  repeated Team teams = 1;
+}
 
-message AddMemberRequest        { string team_id = 1; string user_id = 2; Role role = 3; }
-message RemoveMemberRequest     { string team_id = 1; string user_id = 2; }
-message UpdateMemberRoleRequest { string team_id = 1; string user_id = 2; Role role = 3; }
-message ListMembersRequest      { string team_id = 1; }
-message ListMembersResponse     { repeated Membership memberships = 1; }
+message AddMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+  Role role = 3;
+}
+message RemoveMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+}
+message UpdateMemberRoleRequest {
+  string team_id = 1;
+  string user_id = 2;
+  Role role = 3;
+}
+message ListMembersRequest {
+  string team_id = 1;
+}
+message ListMembersResponse {
+  repeated Membership memberships = 1;
+}

@@ -35,15 +35,50 @@ message BranchProtection {
   google.protobuf.Timestamp updated_at = 5;
 }
 
-message Ref { string name = 1; string sha = 2; }
+message Ref {
+  string name = 1;
+  string sha = 2;
+}
 
-message CreateRepoRequest  { string org_id = 1; string slug = 2; string default_branch = 3; bool lfs_enabled = 4; }
-message GetRepoRequest     { string org_id = 1; string slug = 2; }
-message UpdateRepoRequest  { string org_id = 1; string slug = 2; string default_branch = 3; bool lfs_enabled = 4; }
-message DeleteRepoRequest  { string org_id = 1; string slug = 2; }
-message ListReposRequest   { string org_id = 1; }
-message ListReposResponse  { repeated Repo repos = 1; }
-message ListRefsRequest    { string repo_id = 1; }
-message ListRefsResponse   { repeated Ref refs = 1; }
-message ProtectRefRequest  { string repo_id = 1; string pattern = 2; bool require_signed = 3; int32 required_reviewers = 4; }
-message UnprotectRefRequest{ string repo_id = 1; string pattern = 2; }
+message CreateRepoRequest {
+  string org_id = 1;
+  string slug = 2;
+  string default_branch = 3;
+  bool lfs_enabled = 4;
+}
+message GetRepoRequest {
+  string org_id = 1;
+  string slug = 2;
+}
+message UpdateRepoRequest {
+  string org_id = 1;
+  string slug = 2;
+  string default_branch = 3;
+  bool lfs_enabled = 4;
+}
+message DeleteRepoRequest {
+  string org_id = 1;
+  string slug = 2;
+}
+message ListReposRequest {
+  string org_id = 1;
+}
+message ListReposResponse {
+  repeated Repo repos = 1;
+}
+message ListRefsRequest {
+  string repo_id = 1;
+}
+message ListRefsResponse {
+  repeated Ref refs = 1;
+}
+message ProtectRefRequest {
+  string repo_id = 1;
+  string pattern = 2;
+  bool require_signed = 3;
+  int32 required_reviewers = 4;
+}
+message UnprotectRefRequest {
+  string repo_id = 1;
+  string pattern = 2;
+}

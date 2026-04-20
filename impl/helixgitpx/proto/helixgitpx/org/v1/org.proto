@@ -19,9 +19,21 @@ message Org {
   google.protobuf.Timestamp created_at = 4;
 }
 
-message CreateOrgRequest { string slug = 1; string name = 2; }
-message GetOrgRequest    { string slug = 1; }
-message UpdateOrgRequest { string slug = 1; string name = 2; }
-message DeleteOrgRequest { string slug = 1; }
-message ListOrgsRequest  {}
-message ListOrgsResponse { repeated Org orgs = 1; }
+message CreateOrgRequest {
+  string slug = 1;
+  string name = 2;
+}
+message GetOrgRequest {
+  string slug = 1;
+}
+message UpdateOrgRequest {
+  string slug = 1;
+  string name = 2;
+}
+message DeleteOrgRequest {
+  string slug = 1;
+}
+message ListOrgsRequest {}
+message ListOrgsResponse {
+  repeated Org orgs = 1;
+}

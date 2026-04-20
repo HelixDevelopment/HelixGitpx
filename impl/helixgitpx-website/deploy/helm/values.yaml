@@ -1,0 +1,8 @@
+image:
+  repository: ghcr.io/helixgitpx/website
+  tag: "1.0.0"
+replicas: 2
+ingress:
+  enabled: true
+  host: helixgitpx.io
+  tlsSecret: helixgitpx-io-tls
