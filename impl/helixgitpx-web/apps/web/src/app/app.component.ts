@@ -1,13 +1,10 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'hx-root',
   standalone: true,
-  template: `
-    <main style="font-family: system-ui; padding: 2rem;">
-      <h1>HelixGitpx</h1>
-      <p>Helix Git Proxy eXtended — federated Git proxy (M1 shell).</p>
-    </main>
-  `,
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
 })
 export class AppComponent {}
