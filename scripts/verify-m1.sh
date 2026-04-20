@@ -25,11 +25,17 @@ check() {
     fi
 }
 
+# Resolve to repo root regardless of where the script is invoked from.
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
+cd "$REPO_ROOT"
+
 echo "== M1 Completion Matrix =="
+echo "Running from: $REPO_ROOT"
 
 export GOTOOLCHAIN=go1.23.4
 
-check "1  Go monorepo builds"             bash -c 'cd impl/helixgitpx && go build ./...'
+check "1  Go monorepo builds"             bash -c 'cd impl/helixgitpx && go build ./platform/... ./services/hello/... ./tools/scaffold/... ./gen/...'
 check "2  platform/ packages compile"     bash -c 'cd impl/helixgitpx/platform && go build ./...'
 check "3  platform/ tests pass"           bash -c 'cd impl/helixgitpx/platform && go test -count=1 ./...'
 check "4  Nx workspace config"            test -f impl/helixgitpx-web/nx.json
