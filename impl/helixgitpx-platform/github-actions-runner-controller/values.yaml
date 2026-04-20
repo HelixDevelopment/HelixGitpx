@@ -1,0 +1,5 @@
+# Helm values for actions-runner-controller (ARC)
+# Chart: oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+githubConfigUrl: "https://github.com/helixgitpx"
+githubConfigSecret: arc-github-token  # externally supplied (Vault injects in M2)
+replicaCount: 1
