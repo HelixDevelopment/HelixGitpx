@@ -1,0 +1,41 @@
+name: ci-web
+on:
+  workflow_dispatch:
+    inputs:
+      affected-only:
+        type: boolean
+        default: true
+      run-e2e:
+        type: boolean
+        default: false
+concurrency:
+  group: ci-web-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: impl/helixgitpx-web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.18.1"
+          cache: npm
+          cache-dependency-path: impl/helixgitpx-web/package-lock.json
+      - run: npm ci
+      - name: Nx affected lint+test+build
+        if: ${{ inputs.affected-only }}
+        run: npx nx affected -t lint,test,build --base=origin/main --head=HEAD
+      - name: Nx run-many lint+test+build
+        if: ${{ !inputs.affected-only }}
+        run: npx nx run-many -t lint,test,build
+      - name: Lighthouse (bundle size + perf)
+        run: npm run lighthouse --if-present
+      - name: Playwright e2e
+        if: ${{ inputs.run-e2e }}
+        run: npx playwright install --with-deps && npm run e2e --if-present
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-dist
+          path: impl/helixgitpx-web/dist
