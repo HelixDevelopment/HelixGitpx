@@ -2,4 +2,7 @@ go 1.23.0
 
 toolchain go1.23.4
 
-use ./platform
+use (
+	./platform
+	./tools/scaffold
+)
