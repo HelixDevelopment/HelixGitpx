@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-bootstrap
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: vault
+      containers:
+        - name: bootstrap
+          image: hashicorp/vault:1.18.3
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              export VAULT_ADDR=http://vault:8200
+              if ! vault status 2>/dev/null; then
+                  vault operator init \
+                      -key-shares={{ .Values.bootstrap.shamir.keyShares }} \
+                      -key-threshold={{ .Values.bootstrap.shamir.keyThreshold }} \
+                      -format=json > /tmp/init.json
+                  kubectl create secret generic vault-unseal-keys \
+                      --from-file=/tmp/init.json \
+                      --namespace=helix-secrets
+                  for i in 0 1 2; do
+                      for k in $(jq -r '.unseal_keys_b64[]' /tmp/init.json | head -{{ .Values.bootstrap.shamir.keyThreshold }}); do
+                          vault operator unseal "$k" || true
+                      done
+                  done
+              fi
+              for p in pg-backup-writer opensearch-backup-writer loki-chunk-writer \
+                       tempo-trace-writer mimir-block-writer pyroscope-profile-writer hello; do
+                  vault policy write "$p" "/policies/${p}.hcl"
+              done
+              vault auth enable -path=kubernetes kubernetes || true
+              vault write auth/kubernetes/config \
+                  kubernetes_host="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+              vault write auth/kubernetes/role/hello \
+                  bound_service_account_names=hello \
+                  bound_service_account_namespaces=helix \
+                  policies=hello \
+                  ttl=1h
+          volumeMounts:
+            - { name: policies, mountPath: /policies, readOnly: true }
+      volumes:
+        - name: policies
+          configMap:
+            name: vault-policies

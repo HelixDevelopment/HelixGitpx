@@ -1,0 +1,25 @@
+vault:
+  server:
+    ha:
+      enabled: true
+      replicas: 3
+      raft:
+        enabled: true
+        setNodeId: true
+    dataStorage:
+      enabled: true
+      size: 10Gi
+  injector:
+    enabled: true
+    replicas: 2
+  csi:
+    enabled: false
+
+bootstrap:
+  mode: shamir
+  shamir:
+    keyShares: 3
+    keyThreshold: 2
+  kms:
+    provider: ""
+    keyID: ""

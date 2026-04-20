@@ -1,0 +1,8 @@
+vault:
+  server:
+    ha:
+      replicas: 1
+  injector:
+    replicas: 1
+bootstrap:
+  mode: shamir
