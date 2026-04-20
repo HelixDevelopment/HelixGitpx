@@ -1,0 +1,15 @@
+# Codegen output — mark as generated to suppress diffs in UIs that honor linguist
+impl/helixgitpx/gen/** linguist-generated=true
+impl/helixgitpx/api/openapi/** linguist-generated=true
+impl/helixgitpx-web/libs/proto/** linguist-generated=true
+impl/helixgitpx-clients/shared/src/commonMain/kotlin/gen/** linguist-generated=true
+impl/helixgitpx-clients/iosApp/Gen/** linguist-generated=true
+
+# Normalize line endings
+* text=auto eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
