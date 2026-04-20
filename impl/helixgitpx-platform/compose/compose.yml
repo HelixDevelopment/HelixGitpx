@@ -1,0 +1,173 @@
+# Local development stack for HelixGitpx M1 Foundation.
+# Invoked via impl/helixgitpx-platform/compose/bin/compose (see ADR-0002).
+name: helixgitpx
+
+x-common-env: &common-env
+  TZ: UTC
+
+networks:
+  helix:
+    driver: bridge
+
+volumes:
+  pg-data:
+  kafka-data:
+  redis-data:
+  prom-data:
+  grafana-data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["core", "all"]
+    environment:
+      <<: *common-env
+      POSTGRES_USER: helix
+      POSTGRES_PASSWORD: helix
+      POSTGRES_DB: helixgitpx
+    ports: ["5432:5432"]
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [helix]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helix -d helixgitpx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:3.8.1
+    profiles: ["core", "all"]
+    environment:
+      <<: *common-env
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "K6VU7KM6S2KjVSdQ7Y1-DA"
+    ports: ["9092:9092"]
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks: [helix]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["core", "all"]
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes:
+      - redis-data:/data
+    networks: [helix]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  karapace:
+    image: ghcr.io/aiven-open/karapace:latest
+    profiles: ["registry", "all"]
+    environment:
+      <<: *common-env
+      KARAPACE_ADVERTISED_HOSTNAME: karapace
+      KARAPACE_BOOTSTRAP_URI: kafka:9092
+      KARAPACE_PORT: 8081
+      KARAPACE_HOST: 0.0.0.0
+      KARAPACE_REGISTRY_HOST: 0.0.0.0
+      KARAPACE_LOG_LEVEL: WARNING
+    command: ["karapace", "/opt/karapace/karapace.config.json"]
+    ports: ["8081:8081"]
+    networks: [helix]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62
+    profiles: ["observability", "all"]
+    environment:
+      <<: *common-env
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks: [helix]
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    profiles: ["observability", "all"]
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports: ["9090:9090"]
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom-data:/prometheus
+    networks: [helix]
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    profiles: ["observability", "all"]
+    environment:
+      <<: *common-env
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports: ["3000:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks: [helix]
+    depends_on:
+      - prometheus
+
+  bufstream:
+    image: bufbuild/bufstream:latest
+    profiles: ["registry"]
+    environment:
+      <<: *common-env
+    ports: ["8082:8082"]
+    networks: [helix]
+
+  hello:
+    build:
+      context: ../../helixgitpx
+      dockerfile: services/hello/deploy/Dockerfile
+    profiles: ["all"]
+    environment:
+      <<: *common-env
+      HELLO_HTTP_ADDR: ":8001"
+      HELLO_GRPC_ADDR: ":9001"
+      HELLO_HEALTH_ADDR: ":8081"
+      HELLO_POSTGRES_DSN: "postgres://hello_svc:hello_svc@postgres:5432/helixgitpx?search_path=hello&sslmode=disable"
+      HELLO_REDIS_ADDR: "redis:6379"
+      HELLO_KAFKA_BROKERS: "kafka:9092"
+      HELLO_KAFKA_TOPIC: "hello.said"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+      OTEL_SERVICE_NAME: "hello"
+    ports:
+      - "8001:8001"
+      - "9001:9001"
+      - "8081:8081"
+    networks: [helix]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
