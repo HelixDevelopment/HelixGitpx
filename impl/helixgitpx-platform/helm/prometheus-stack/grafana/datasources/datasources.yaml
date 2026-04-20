@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  labels:
+    grafana_datasource: "1"
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prom
+        url: http://mimir-nginx.helix-observability.svc/prometheus
+        access: proxy
+        isDefault: true
+      - name: Loki
+        type: loki
+        uid: loki
+        url: http://loki-gateway.helix-observability.svc
+        access: proxy
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        url: http://tempo.helix-observability.svc:3200
+        access: proxy
+      - name: Pyroscope
+        type: grafana-pyroscope-datasource
+        uid: pyroscope
+        url: http://pyroscope.helix-observability.svc:4040
+        access: proxy
+      - name: Alertmanager
+        type: alertmanager
+        uid: alertmanager
+        url: http://prom-kube-prometheus-stack-alertmanager.helix-observability.svc:9093
+        access: proxy

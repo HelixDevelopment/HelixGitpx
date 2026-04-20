@@ -1,0 +1,19 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [
+    {
+      "datasource": {"uid": "prom", "type": "prometheus"},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "targets": [{"expr": "sum by (phase) (kube_pod_status_phase)"}],
+      "title": "Pods by phase",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": ["helixgitpx", "cluster"],
+  "title": "HelixGitpx — Cluster",
+  "uid": "helixgitpx-cluster",
+  "version": 1
+}

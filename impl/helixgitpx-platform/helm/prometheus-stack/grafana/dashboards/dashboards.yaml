@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-helixgitpx
+  labels:
+    grafana_dashboard: "1"
+data:
+  hello.json: |-
+{{ .Files.Get "grafana/dashboards/hello.json" | indent 4 }}
+  cluster.json: |-
+{{ .Files.Get "grafana/dashboards/cluster.json" | indent 4 }}

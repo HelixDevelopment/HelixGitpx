@@ -1,0 +1,10 @@
+kube-prometheus-stack:
+  alertmanager:
+    alertmanagerSpec:
+      replicas: 1
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      resources:
+        requests: { cpu: 200m, memory: 512Mi }
+        limits:   { cpu: 1,    memory: 2Gi }
