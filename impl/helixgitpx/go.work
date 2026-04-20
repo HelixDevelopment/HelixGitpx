@@ -4,5 +4,6 @@ toolchain go1.23.4
 
 use (
 	./platform
+	./services/hello
 	./tools/scaffold
 )
