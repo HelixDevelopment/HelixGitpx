@@ -1,0 +1,9 @@
+apiVersion: v2
+name: istio-base
+description: Istio base CRDs + cluster role (prerequisite for Ambient)
+type: application
+version: 0.1.0
+dependencies:
+  - name: base
+    version: "1.24.2"
+    repository: https://istio-release.storage.googleapis.com/charts

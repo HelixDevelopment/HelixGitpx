@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: helix
+      labels:
+        istio.io/dataplane-mode: ambient
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: helix-data
+      labels:
+        istio.io/dataplane-mode: ambient
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: helix-cache
+      labels:
+        istio.io/dataplane-mode: ambient
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: helix-secrets
+      labels:
+        istio.io/dataplane-mode: ambient

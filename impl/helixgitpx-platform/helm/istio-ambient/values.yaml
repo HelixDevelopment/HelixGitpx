@@ -1,0 +1,10 @@
+istiod:
+  profile: ambient
+  meshConfig:
+    caProvider: spiffe://helixgitpx.local
+
+cni:
+  profile: ambient
+
+ztunnel:
+  profile: ambient
