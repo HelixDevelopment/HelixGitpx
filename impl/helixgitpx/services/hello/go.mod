@@ -1,9 +1,12 @@
 module github.com/helixgitpx/helixgitpx/services/hello
 
-go 1.23.0
+go 1.23
 
-toolchain go1.23.4
+require (
+	github.com/helixgitpx/helixgitpx/gen v0.0.0
+	github.com/helixgitpx/platform v0.0.0
+)
 
-require github.com/helixgitpx/platform v0.0.0
+replace github.com/helixgitpx/helixgitpx/gen => ../../gen
 
 replace github.com/helixgitpx/platform => ../../platform
