@@ -23,3 +23,15 @@ topics:
     partitions: 3
     replicas: 1
     retentionMs: 604800000
+  - name: sync.dlq
+    partitions: 3
+    replicas: 1
+    retentionMs: 604800000
+  - name: conflict.resolved
+    partitions: 3
+    replicas: 1
+    retentionMs: -1
+  - name: collab.events
+    partitions: 3
+    replicas: 1
+    retentionMs: 604800000

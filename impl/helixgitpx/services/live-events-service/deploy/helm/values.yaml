@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/live-events-service
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  LIVE_EVENTS_SERVICE_HTTP_ADDR: ":8001"
+  LIVE_EVENTS_SERVICE_GRPC_ADDR: ":9001"
+  LIVE_EVENTS_SERVICE_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/live-events-service
+    tag: dev
+  env:
+    - name: LIVE_EVENTS_SERVICE_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: live-events-service-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: live-events-service.helix.local
+  tlsSecret: live-events-service-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: live-events-service
+  kvPath: kv/live-events-service

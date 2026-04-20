@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/collab-service
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  COLLAB_SERVICE_HTTP_ADDR: ":8001"
+  COLLAB_SERVICE_GRPC_ADDR: ":9001"
+  COLLAB_SERVICE_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/collab-service
+    tag: dev
+  env:
+    - name: COLLAB_SERVICE_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: collab-service-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: collab-service.helix.local
+  tlsSecret: collab-service-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: collab-service
+  kvPath: kv/collab-service

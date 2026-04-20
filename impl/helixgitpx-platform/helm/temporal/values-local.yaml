@@ -1,0 +1,7 @@
+temporal:
+  server:
+    replicaCount: 1
+temporalPg:
+  instances: 1
+  storage:
+    size: 5Gi

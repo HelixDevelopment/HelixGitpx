@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/sync-orchestrator
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  SYNC_ORCHESTRATOR_HTTP_ADDR: ":8001"
+  SYNC_ORCHESTRATOR_GRPC_ADDR: ":9001"
+  SYNC_ORCHESTRATOR_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/sync-orchestrator
+    tag: dev
+  env:
+    - name: SYNC_ORCHESTRATOR_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: sync-orchestrator-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: sync-orchestrator.helix.local
+  tlsSecret: sync-orchestrator-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: sync-orchestrator
+  kvPath: kv/sync-orchestrator

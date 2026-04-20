@@ -1,0 +1,30 @@
+temporal:
+  server:
+    replicaCount: 3
+    config:
+      persistence:
+        default:
+          driver: sql
+          sql:
+            driver: postgres12
+            host: helix-temporal-pg-rw.helix-data.svc
+            port: 5432
+            database: temporal
+            user: temporal
+            existingSecret: helix-temporal-pg-app
+  cassandra:
+    enabled: false
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: false     # we have our own grafana in helix-observability
+  elasticsearch:
+    enabled: false
+  schema:
+    createDatabase:
+      enabled: true
+
+temporalPg:
+  instances: 3
+  storage:
+    size: 20Gi

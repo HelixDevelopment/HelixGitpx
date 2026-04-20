@@ -8,10 +8,14 @@ use (
 	./services/adapter-pool
 	./services/audit
 	./services/auth
+	./services/collab-service
+	./services/conflict-resolver
 	./services/git-ingress
 	./services/hello
+	./services/live-events-service
 	./services/orgteam
 	./services/repo
+	./services/sync-orchestrator
 	./services/upstream
 	./services/webhook-gateway
 	./tools/scaffold

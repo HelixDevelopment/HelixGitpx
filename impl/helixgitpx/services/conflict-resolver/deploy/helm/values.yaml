@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/conflict-resolver
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  CONFLICT_RESOLVER_HTTP_ADDR: ":8001"
+  CONFLICT_RESOLVER_GRPC_ADDR: ":9001"
+  CONFLICT_RESOLVER_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/conflict-resolver
+    tag: dev
+  env:
+    - name: CONFLICT_RESOLVER_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: conflict-resolver-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: conflict-resolver.helix.local
+  tlsSecret: conflict-resolver-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: conflict-resolver
+  kvPath: kv/conflict-resolver
