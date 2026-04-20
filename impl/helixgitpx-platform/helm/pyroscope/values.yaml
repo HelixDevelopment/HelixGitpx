@@ -1,0 +1,15 @@
+pyroscope:
+  pyroscope:
+    persistence:
+      enabled: true
+      size: 10Gi
+    replicaCount: 3
+    config: |
+      storage:
+        backend: s3
+        s3:
+          endpoint: minio.helix-system.svc:9000
+          bucket_name: pyroscope-profiles
+          access_key_id: ${MINIO_ROOT_USER}
+          secret_access_key: ${MINIO_ROOT_PASSWORD}
+          insecure: true

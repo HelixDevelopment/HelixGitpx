@@ -1,0 +1,3 @@
+pyroscope:
+  pyroscope:
+    replicaCount: 1

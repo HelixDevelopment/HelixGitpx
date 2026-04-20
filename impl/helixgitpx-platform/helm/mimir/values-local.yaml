@@ -1,0 +1,6 @@
+mimir-distributed:
+  ingester: { replicas: 1 }
+  distributor: { replicas: 1 }
+  store_gateway: { replicas: 1 }
+  querier: { replicas: 1 }
+  query_frontend: { replicas: 1 }

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: pyroscope
+description: Grafana Pyroscope (continuous profiling)
+type: application
+version: 0.1.0
+dependencies:
+  - name: pyroscope
+    version: "1.9.2"
+    repository: https://grafana.github.io/helm-charts

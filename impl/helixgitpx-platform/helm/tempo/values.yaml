@@ -1,0 +1,23 @@
+tempo-distributed:
+  storage:
+    trace:
+      backend: s3
+      s3:
+        endpoint: minio.helix-system.svc:9000
+        bucket: tempo-traces
+        access_key: ${MINIO_ROOT_USER}
+        secret_key: ${MINIO_ROOT_PASSWORD}
+        insecure: true
+  distributor:
+    replicas: 3
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+  ingester: { replicas: 3 }
+  querier: { replicas: 3 }
+  queryFrontend: { replicas: 2 }
+  compactor: { replicas: 1 }
