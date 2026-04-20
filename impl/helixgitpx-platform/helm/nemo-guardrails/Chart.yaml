@@ -1,0 +1,5 @@
+apiVersion: v2
+name: nemo-guardrails
+description: HelixGitpx nemo-guardrails infrastructure chart (M7)
+type: application
+version: 0.1.0

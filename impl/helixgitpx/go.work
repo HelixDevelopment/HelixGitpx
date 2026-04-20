@@ -6,6 +6,7 @@ use (
 	./gen
 	./platform
 	./services/adapter-pool
+	./services/ai-service
 	./services/audit
 	./services/auth
 	./services/collab-service
@@ -13,8 +14,10 @@ use (
 	./services/git-ingress
 	./services/hello
 	./services/live-events-service
+	./services/opa-bundle-server
 	./services/orgteam
 	./services/repo
+	./services/search-service
 	./services/sync-orchestrator
 	./services/upstream
 	./services/webhook-gateway

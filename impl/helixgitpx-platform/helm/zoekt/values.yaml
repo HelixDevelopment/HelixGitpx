@@ -1,0 +1,2 @@
+# M7 placeholder values for zoekt; full configuration lands with real AI workload rollout.
+replicas: 1

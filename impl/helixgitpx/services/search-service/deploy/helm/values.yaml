@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/search-service
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  SEARCH_SERVICE_HTTP_ADDR: ":8001"
+  SEARCH_SERVICE_GRPC_ADDR: ":9001"
+  SEARCH_SERVICE_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/search-service
+    tag: dev
+  env:
+    - name: SEARCH_SERVICE_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: search-service-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: search-service.helix.local
+  tlsSecret: search-service-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: search-service
+  kvPath: kv/search-service

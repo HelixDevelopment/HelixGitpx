@@ -1,0 +1,2 @@
+# M7 placeholder values for nemo-guardrails; full configuration lands with real AI workload rollout.
+replicas: 1

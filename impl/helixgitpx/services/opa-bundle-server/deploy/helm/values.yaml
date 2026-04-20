@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/opa-bundle-server
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  OPA_BUNDLE_SERVER_HTTP_ADDR: ":8001"
+  OPA_BUNDLE_SERVER_GRPC_ADDR: ":9001"
+  OPA_BUNDLE_SERVER_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/opa-bundle-server
+    tag: dev
+  env:
+    - name: OPA_BUNDLE_SERVER_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: opa-bundle-server-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: opa-bundle-server.helix.local
+  tlsSecret: opa-bundle-server-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: opa-bundle-server
+  kvPath: kv/opa-bundle-server

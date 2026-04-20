@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/ai-service
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  AI_SERVICE_HTTP_ADDR: ":8001"
+  AI_SERVICE_GRPC_ADDR: ":9001"
+  AI_SERVICE_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/ai-service
+    tag: dev
+  env:
+    - name: AI_SERVICE_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: ai-service-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ai-service.helix.local
+  tlsSecret: ai-service-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: ai-service
+  kvPath: kv/ai-service
