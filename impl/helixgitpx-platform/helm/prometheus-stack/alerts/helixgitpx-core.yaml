@@ -1,0 +1,70 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: helixgitpx-core-alerts
+  labels: { release: prometheus-stack }
+spec:
+  groups:
+    - name: helixgitpx.core
+      rules:
+        - alert: HelixGitpxServiceDown
+          expr: up{namespace="helixgitpx"} == 0
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: 'Service {{ $labels.service }} is down'
+            runbook: 'https://docs.helixgitpx.io/operations/runbooks/partition'
+        - alert: KafkaBrokerDown
+          expr: strimzi_kafka_broker_up == 0
+          for: 2m
+          labels: { severity: critical }
+          annotations:
+            summary: 'Kafka broker down'
+            runbook: 'https://docs.helixgitpx.io/operations/runbooks/broker-kill'
+        - alert: PersistentVolumeUsageHigh
+          expr: |
+            (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: 'PVC {{ $labels.persistentvolumeclaim }} >85% full'
+            runbook: 'https://docs.helixgitpx.io/operations/runbooks/disk-full'
+        - alert: OPAEvaluationErrorRateHigh
+          expr: rate(opa_rego_query_errors_total[5m]) > 1
+          for: 3m
+          labels: { severity: warning }
+          annotations:
+            summary: 'OPA evaluation errors'
+            runbook: 'https://docs.helixgitpx.io/operations/runbooks/opa-rollback'
+        - alert: HelixGitpxRegionUnreachable
+          expr: probe_success{job="blackbox", target=~"api.*.helixgitpx.io"} == 0
+          for: 3m
+          labels: { severity: critical }
+          annotations:
+            summary: 'Region {{ $labels.target }} unreachable'
+            runbook: 'https://docs.helixgitpx.io/operations/runbooks/dr-failover'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: alertmanager-config, labels: { release: prometheus-stack } }
+data:
+  alertmanager.yaml: |
+    route:
+      receiver: pagerduty
+      group_by: [alertname, severity]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      routes:
+        - matchers: [severity="critical"]
+          receiver: pagerduty
+        - matchers: [severity="warning"]
+          receiver: slack
+    receivers:
+      - name: pagerduty
+        pagerduty_configs:
+          - service_key: '{{ `{{ .CommonLabels.pagerduty_key }}` }}'
+      - name: slack
+        slack_configs:
+          - api_url: 'https://hooks.slack.com/services/...'
+            channel: '#helixgitpx-alerts'
