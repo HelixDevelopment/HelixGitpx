@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+# Compose runtime wrapper — auto-detects docker or podman.
+# Every Makefile/script must call this wrapper, never docker/podman directly.
+# See ADR-0002.
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+COMPOSE_FILE="${COMPOSE_FILE:-${SCRIPT_DIR}/../compose.yml}"
+
+if [ ! -f "${COMPOSE_FILE}" ]; then
+    printf 'compose: cannot find compose file at %s\n' "${COMPOSE_FILE}" >&2
+    exit 2
+fi
+
+# Resolution order: docker compose → podman compose → podman-compose.
+# docker first because it is the ecosystem default; podman is first-class via compose v2.
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    exec docker compose -f "${COMPOSE_FILE}" "$@"
+elif command -v podman >/dev/null 2>&1 && podman compose version >/dev/null 2>&1; then
+    # podman 4.7+ supports `podman compose` via compose plugin.
+    exec podman compose -f "${COMPOSE_FILE}" "$@"
+elif command -v podman-compose >/dev/null 2>&1; then
+    exec podman-compose -f "${COMPOSE_FILE}" "$@"
+else
+    cat >&2 <<'EOF'
+compose: no container runtime found. Install one of:
+  - Docker Desktop (macOS/Windows) or docker-ce + compose v2 plugin (Linux)
+  - Podman 4.7+ (with the compose plugin: `podman compose --help` must succeed)
+  - podman-compose (fallback for older podman)
+EOF
+    exit 3
+fi
