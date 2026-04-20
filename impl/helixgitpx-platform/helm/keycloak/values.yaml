@@ -1,0 +1,52 @@
+keycloak:
+  command: ["/opt/keycloak/bin/kc.sh", "start", "--optimized", "--import-realm"]
+  replicas: 3
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: "26.0.5"
+  extraEnv: |
+    - name: KC_HOSTNAME
+      value: keycloak.helix.local
+    - name: KC_HTTP_ENABLED
+      value: "true"
+    - name: KC_PROXY
+      value: "edge"
+    - name: KC_DB
+      value: postgres
+    - name: KC_DB_URL
+      value: "jdbc:postgresql://helix-kc-pg-rw.helix-identity.svc:5432/keycloak"
+    - name: KC_DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: helix-kc-pg-app
+          key: username
+    - name: KC_DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: helix-kc-pg-app
+          key: password
+  extraVolumes: |
+    - name: realm-import
+      configMap:
+        name: keycloak-realm-import
+  extraVolumeMounts: |
+    - name: realm-import
+      mountPath: /opt/keycloak/data/import
+      readOnly: true
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: selfsigned-ca
+    rules:
+      - host: keycloak.helix.local
+        paths: [{ path: "/", pathType: Prefix }]
+    tls:
+      - { hosts: [keycloak.helix.local], secretName: keycloak-helix-local-tls }
+
+kcPg:
+  instances: 3
+  storage:
+    size: 20Gi

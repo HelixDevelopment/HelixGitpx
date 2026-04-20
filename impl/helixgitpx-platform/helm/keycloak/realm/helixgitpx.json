@@ -1,0 +1,66 @@
+{
+  "realm": "helixgitpx",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      { "name": "helixgitpx-user", "description": "Default user role" },
+      { "name": "helixgitpx-admin", "description": "Platform admin" }
+    ]
+  },
+  "defaultRoles": ["helixgitpx-user"],
+  "users": [
+    {
+      "username": "user@helixgitpx.local",
+      "email": "user@helixgitpx.local",
+      "firstName": "Test",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "user", "temporary": false }],
+      "realmRoles": ["helixgitpx-user"]
+    },
+    {
+      "username": "admin@helixgitpx.local",
+      "email": "admin@helixgitpx.local",
+      "firstName": "Test",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "realmRoles": ["helixgitpx-user", "helixgitpx-admin"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "helixgitpx-web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://web.helix.local/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "auth-service",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "secret": "auth-service-dev-secret",
+      "redirectUris": []
+    }
+  ]
+}

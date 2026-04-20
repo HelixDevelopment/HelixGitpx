@@ -1,0 +1,6 @@
+keycloak:
+  replicas: 1
+kcPg:
+  instances: 1
+  storage:
+    size: 5Gi

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-import
+  namespace: helix-identity
+data:
+  helixgitpx.json: |-
+{{ .Files.Get "realm/helixgitpx.json" | indent 4 }}
