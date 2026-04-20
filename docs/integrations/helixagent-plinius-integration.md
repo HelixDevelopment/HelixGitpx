@@ -2,6 +2,17 @@
 
 > **Status:** Inbound — for upcoming integration effort(s).
 > **Received:** 2026-04-20.
+>
+> ⚠️ **READ FIRST:**
+> [`helixagent-plinius-verification.md`](./helixagent-plinius-verification.md) —
+> independent fact-check of every claim below. Key findings: the **Go port
+> layer does not exist yet** (no `vasic-digital/go-elder-plinius*` repos today);
+> three named modules (`go-tempest`, `go-gandalf-solutions`, `go-gitgpt`) have
+> **no upstream** in elder-plinius; and several HelixAgent submodules in the
+> integration table (DebateOrchestrator, Agentic, HelixSpecifier, MCP-Servers,
+> BackgroundTasks, BootManager) may be private or not-yet-created. Insert a W0
+> "port & inventory" spike before Phase 1.
+>
 > **Scope:** This document describes an integration plan against the HelixAgent
 > project (HelixDevelopment/HelixAgent) and the go-elder-plinius module family.
 > Many of the modules listed below (LLMsVerifier, HelixQA, etc.) live outside

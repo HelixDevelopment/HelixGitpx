@@ -11,6 +11,10 @@ the integration is scheduled.
   Integrating the go-elder-plinius module family into the HelixAgent project
   (LLMsVerifier, HelixQA, DebateOrchestrator, Agentic, HelixLLM, etc.).
   13 modified files, 22 new files across 15 submodules. 20 new capabilities.
+- [`helixagent-plinius-verification.md`](./helixagent-plinius-verification.md)
+  — **read alongside the plan.** Independent fact-check: confirms upstream
+  elder-plinius repos exist, but the Go port layer does not; recommends a
+  Week 0 "port and inventory" spike before Phase 1.
 
 ## Status
 
