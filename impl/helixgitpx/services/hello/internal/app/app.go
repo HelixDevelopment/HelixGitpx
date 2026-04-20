@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	nethttp "net/http"
+	"os"
 	"time"
 
 	"github.com/helixgitpx/helixgitpx/services/hello/internal/domain"
@@ -21,6 +22,7 @@ import (
 	"github.com/helixgitpx/platform/log"
 	"github.com/helixgitpx/platform/pg"
 	hredis "github.com/helixgitpx/platform/redis"
+	"github.com/helixgitpx/platform/spire"
 	"github.com/helixgitpx/platform/telemetry"
 )
 
@@ -72,7 +74,13 @@ func Run(ctx context.Context, lg *log.Logger) error {
 		&repo.EventOutbox{Pool: pool, Topic: c.KafkaTopic},
 	)
 
-	grpcSrv, err := hgrpc.NewServer(hgrpc.Options{})
+	spireFetcher, err := spire.NewFetcher(ctx, spire.Options{SocketPath: os.Getenv("SPIFFE_ENDPOINT_SOCKET")})
+	if err != nil {
+		return err
+	}
+	defer spireFetcher.Close()
+
+	grpcSrv, err := hgrpc.NewServer(hgrpc.Options{Fetcher: spireFetcher})
 	if err != nil {
 		return err
 	}
@@ -86,6 +94,7 @@ func Run(ctx context.Context, lg *log.Logger) error {
 	hh.Register("redis", hredis.Probe(rc))
 	hmux := nethttp.NewServeMux()
 	hh.Routes(hmux)
+	telemetry.RegisterPprof(hmux)
 
 	grpcL, err := net.Listen("tcp", c.GRPCAddr)
 	if err != nil {
