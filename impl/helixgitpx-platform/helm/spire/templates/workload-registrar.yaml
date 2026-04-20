@@ -1,0 +1,2 @@
+# The spire-controller-manager subchart handles ClusterSPIFFEID provisioning.
+# This file is a placeholder for future manual overrides (per-namespace SPIFFE IDs).

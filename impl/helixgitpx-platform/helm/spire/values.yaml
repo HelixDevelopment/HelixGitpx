@@ -1,0 +1,21 @@
+spire:
+  trustDomain: helixgitpx.local
+  server:
+    replicaCount: 3
+    dataStore:
+      sql:
+        databaseType: sqlite3
+        connectionString: "/run/spire/data/datastore.sqlite3"
+  agent:
+    logLevel: info
+  spire-controller-manager:
+    enabled: true
+    identities:
+      clusterSPIFFEIDs:
+        default:
+          spiffeIDTemplate: "spiffe://helixgitpx.local/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}"
+          namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: NotIn
+                values: [kube-system, kube-public, kube-node-lease]

@@ -1,0 +1,3 @@
+spire:
+  server:
+    replicaCount: 1

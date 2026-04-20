@@ -1,0 +1,9 @@
+apiVersion: v2
+name: spire
+description: SPIFFE/SPIRE server + agent + workload registrar
+type: application
+version: 0.1.0
+dependencies:
+  - name: spire
+    version: "0.24.0"
+    repository: https://spiffe.github.io/helm-charts-hardened

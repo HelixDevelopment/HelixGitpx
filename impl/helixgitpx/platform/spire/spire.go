@@ -1,11 +1,15 @@
-// Package spire integrates SPIFFE/SPIRE workload API.
-// M1 ships a stub; M2 wires go-spiffe/v2 to fetch SVIDs.
+// Package spire integrates SPIFFE/SPIRE workload API via go-spiffe/v2.
+// M2 lifts the M1 no-op stub; a non-empty SocketPath now returns a live
+// fetcher that streams X.509 SVIDs from the SPIRE agent.
 package spire
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+
+	"github.com/spiffe/go-spiffe/v2/workloadapi"
 )
 
 // ErrUnavailable indicates the SPIRE agent socket is not reachable.
@@ -16,28 +20,47 @@ type Options struct {
 	SocketPath string // e.g. "unix:///run/spire/agent.sock"
 }
 
-// Fetcher retrieves workload SVIDs. Stubbed in M1.
+// Fetcher streams workload SVIDs from the SPIRE agent.
 type Fetcher struct {
-	SocketPath string
-	noop       bool
+	source *workloadapi.X509Source
+	noop   bool
 }
 
-// NewFetcher returns a Fetcher. When the socket file is absent, returns a no-op fetcher.
-//
-// TODO(M2): wire github.com/spiffe/go-spiffe/v2/workloadapi.NewX509Source and
-// supply SVIDs to grpc/TLS constructors.
-func NewFetcher(_ context.Context, opts Options) (*Fetcher, error) {
+// NewFetcher returns a Fetcher. When SocketPath is empty or the socket
+// file is absent, returns a no-op fetcher so callers can remain agnostic
+// on dev machines without SPIRE.
+func NewFetcher(ctx context.Context, opts Options) (*Fetcher, error) {
 	if opts.SocketPath == "" {
 		return &Fetcher{noop: true}, nil
 	}
 	if _, err := os.Stat(trimUnix(opts.SocketPath)); err != nil {
-		return &Fetcher{noop: true, SocketPath: opts.SocketPath}, nil
+		return &Fetcher{noop: true}, nil
 	}
-	return &Fetcher{SocketPath: opts.SocketPath}, nil
+	src, err := workloadapi.NewX509Source(ctx,
+		workloadapi.WithClientOptions(workloadapi.WithAddr(opts.SocketPath)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("spire: X509Source: %w", errors.Join(ErrUnavailable, err))
+	}
+	return &Fetcher{source: src}, nil
 }
 
-// Close releases resources. No-op for M1.
-func (f *Fetcher) Close() error { return nil }
+// Source returns the underlying *workloadapi.X509Source, or nil when no-op.
+// Callers pass this to grpc.Creds / tls.Config builders.
+func (f *Fetcher) Source() *workloadapi.X509Source {
+	if f == nil || f.noop {
+		return nil
+	}
+	return f.source
+}
+
+// Close releases resources.
+func (f *Fetcher) Close() error {
+	if f == nil || f.source == nil {
+		return nil
+	}
+	return f.source.Close()
+}
 
 func trimUnix(s string) string {
 	const prefix = "unix://"
