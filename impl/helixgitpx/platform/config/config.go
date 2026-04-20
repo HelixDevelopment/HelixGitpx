@@ -13,6 +13,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
@@ -63,6 +64,17 @@ func loadStruct(v reflect.Value, prefix string) error {
 		raw, present := os.LookupEnv(envName)
 		if !present {
 			raw = sf.Tag.Get("default")
+		}
+		// Vault fallback — only attempted when env/default produced nothing.
+		if raw == "" {
+			if vpath := sf.Tag.Get("vault"); vpath != "" {
+				if r := NewVaultResolver(); r != nil {
+					v, err := r.Read(context.Background(), vpath)
+					if err == nil && v != "" {
+						raw = v
+					}
+				}
+			}
 		}
 		if raw == "" && sf.Tag.Get("required") == "true" {
 			return fmt.Errorf("config: required env %s is unset", envName)

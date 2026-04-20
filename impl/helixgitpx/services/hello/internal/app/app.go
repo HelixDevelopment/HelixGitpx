@@ -25,14 +25,14 @@ import (
 )
 
 type cfg struct {
-	HTTPAddr     string   `env:"HTTP_ADDR" default:":8001"`
-	GRPCAddr     string   `env:"GRPC_ADDR" default:":9001"`
-	HealthAddr   string   `env:"HEALTH_ADDR" default:":8081"`
-	PostgresDSN  string   `env:"POSTGRES_DSN" required:"true"`
-	RedisAddr    string   `env:"REDIS_ADDR" default:"localhost:6379"`
-	KafkaTopic string `env:"KAFKA_TOPIC" default:"hello.said"`
-	OTLPEndpoint string   `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
-	Version      string   `env:"VERSION" default:"m1-dev"`
+	HTTPAddr     string `env:"HTTP_ADDR" default:":8001"`
+	GRPCAddr     string `env:"GRPC_ADDR" default:":9001"`
+	HealthAddr   string `env:"HEALTH_ADDR" default:":8081"`
+	PostgresDSN  string `env:"POSTGRES_DSN" vault:"kv/hello#pg_dsn" required:"true"`
+	RedisAddr    string `env:"REDIS_ADDR" vault:"kv/hello#redis_addr" default:"localhost:6379"`
+	KafkaTopic   string `env:"KAFKA_TOPIC" default:"hello.said"`
+	OTLPEndpoint string `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	Version      string `env:"VERSION" default:"m1-dev"`
 }
 
 // Run wires dependencies and serves until ctx is done.
