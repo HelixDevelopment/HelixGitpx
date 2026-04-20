@@ -1,0 +1,17 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: hello
+build:
+  artifacts:
+    - image: helixgitpx/hello
+      context: ../../..
+      docker:
+        dockerfile: services/hello/deploy/Dockerfile
+manifests:
+  helm:
+    releases:
+      - name: hello
+        chartPath: ../../../services/hello/deploy/helm
+deploy:
+  helm: {}
