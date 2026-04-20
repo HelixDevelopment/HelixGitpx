@@ -1,0 +1,14 @@
+replicas: 3
+zone: helixgitpx.io
+regions:
+  - name: eu-central-1
+    primary: true
+    cidrs: ["DE", "PL", "CZ", "AT", "CH", "SK", "HU"]
+    endpoint: api.eu-central-1.helixgitpx.io
+  - name: eu-west-2
+    primary: false
+    cidrs: ["UK", "IE", "FR", "NL", "BE", "ES", "PT"]
+    endpoint: api.eu-west-2.helixgitpx.io
+healthCheck:
+  intervalSeconds: 10
+  failoverThreshold: 3

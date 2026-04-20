@@ -1,0 +1,5 @@
+GET /api/v1/orgs HTTP/1.1
+Host: api.helixgitpx.io
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...
+User-Agent: helixgitpx-client/1.0.0
+

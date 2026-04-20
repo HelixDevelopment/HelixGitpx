@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres-replica
+description: CNPG replica cluster (logical replication from region-a primary)
+type: application
+version: 0.1.0
+appVersion: "16.2"

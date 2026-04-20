@@ -1,0 +1,10 @@
+replicas: 3
+source:
+  clusterName: helixgitpx-kafka-a
+  bootstrapServers: helixgitpx-kafka-a-kafka-bootstrap.kafka:9092
+target:
+  clusterName: helixgitpx-kafka-b
+  bootstrapServers: helixgitpx-kafka-b-kafka-bootstrap.kafka:9092
+topicsPattern: "hello\\..*,audit\\..*,repo\\..*,upstream\\..*,collab\\..*,sync\\..*"
+groupsPattern: ".*"
+refreshIntervalSeconds: 30

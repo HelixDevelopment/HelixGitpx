@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: helixgitpx-region-b
+  namespace: argocd
+spec:
+  description: HelixGitpx region-b (eu-west-2) — active-passive secondary
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.region-b.internal
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

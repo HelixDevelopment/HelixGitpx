@@ -1,0 +1,29 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: helixgitpx-pg-b
+spec:
+  instances: {{ .Values.instances }}
+  replica:
+    enabled: true
+    source: region-a-primary
+  bootstrap:
+    pg_basebackup:
+      source: region-a-primary
+  externalClusters:
+    - name: region-a-primary
+      connectionParameters:
+        host: {{ .Values.source.host }}
+        user: {{ .Values.source.user }}
+        sslmode: require
+      password:
+        name: {{ .Values.source.passwordSecret }}
+        key: password
+  storage:
+    size: {{ .Values.storage }}
+    storageClass: ceph-rbd
+  postgresql:
+    parameters:
+      max_wal_senders: "20"
+      max_replication_slots: "20"
+      wal_level: logical

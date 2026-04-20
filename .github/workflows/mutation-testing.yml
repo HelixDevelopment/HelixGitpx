@@ -1,0 +1,33 @@
+name: mutation-testing
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Go package path or service name'
+        required: true
+        default: './services/repo/internal/domain/...'
+      threshold:
+        description: 'Mutation score threshold (0-100)'
+        required: true
+        default: '60'
+
+jobs:
+  mutest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.23.4' }
+      - name: Install go-mutesting
+        run: go install github.com/zimmski/go-mutesting/cmd/go-mutesting@latest
+      - name: Run mutation tests
+        working-directory: impl/helixgitpx
+        env:
+          GOTOOLCHAIN: go1.23.4
+        run: |
+          go-mutesting --verbose ${{ github.event.inputs.target }} | tee /tmp/mutest.out
+      - name: Enforce threshold
+        run: |
+          score=$(grep -oE 'The mutation score is [0-9.]+' /tmp/mutest.out | grep -oE '[0-9.]+' | head -1)
+          thr=${{ github.event.inputs.threshold }}
+          python3 -c "import sys; sys.exit(0 if float('$score') >= float('$thr') else 1)"

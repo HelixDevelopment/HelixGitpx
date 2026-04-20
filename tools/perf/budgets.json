@@ -1,0 +1,6 @@
+{
+  "api_baseline": { "p95_ms": 100, "p99_ms": 200, "error_rate": 0.001 },
+  "git_push_pull": { "p95_ms": 1500, "error_rate": 0.005 },
+  "websocket_fanout": { "p95_connecting_ms": 500, "error_rate": 0.001 },
+  "ai_chat": { "p95_ms": 8000, "error_rate": 0.01 }
+}

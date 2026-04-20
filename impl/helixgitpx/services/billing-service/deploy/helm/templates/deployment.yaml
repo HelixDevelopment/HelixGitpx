@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  labels: { app: billing-service }
+spec:
+  replicas: {{ .Values.replicas }}
+  selector: { matchLabels: { app: billing-service } }
+  template:
+    metadata:
+      labels: { app: billing-service }
+    spec:
+      containers:
+        - name: billing-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - name: STRIPE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.stripe.apiKeySecret }}
+                  key: api-key
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          readinessProbe: { httpGet: { path: /healthz, port: http } }
+          livenessProbe:  { httpGet: { path: /healthz, port: http } }

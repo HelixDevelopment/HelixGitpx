@@ -1,0 +1,16 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata: { name: kafka-broker-kill, namespace: kafka }
+spec:
+  engineState: active
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: kafka-broker-pod-failure
+      spec:
+        components:
+          env:
+            - { name: KAFKA_NAMESPACE, value: kafka }
+            - { name: KAFKA_LABEL, value: "strimzi.io/name=helixgitpx-kafka" }
+            - { name: KAFKA_BROKER, value: "1" }
+            - { name: TOTAL_CHAOS_DURATION, value: "300" }
+            - { name: CHAOS_INTERVAL, value: "60" }

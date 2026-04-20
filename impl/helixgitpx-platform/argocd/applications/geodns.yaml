@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: geodns
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/HelixGitpx/HelixGitpx.git
+    path: impl/helixgitpx-platform/helm/geodns
+    targetRevision: main
+    helm:
+      releaseName: geodns
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: edge-dns
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]

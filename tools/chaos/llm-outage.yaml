@@ -1,0 +1,15 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata: { name: llm-outage, namespace: ai }
+spec:
+  engineState: active
+  chaosServiceAccount: litmus-admin
+  appinfo: { appns: ai, applabel: "app=ollama", appkind: deployment }
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - { name: TOTAL_CHAOS_DURATION, value: "300" }
+            - { name: PODS_AFFECTED_PERC, value: "100" }
+            - { name: FORCE, value: "true" }

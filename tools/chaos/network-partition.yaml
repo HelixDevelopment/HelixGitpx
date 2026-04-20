@@ -1,0 +1,16 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata: { name: network-partition, namespace: helixgitpx }
+spec:
+  engineState: active
+  chaosServiceAccount: litmus-admin
+  appinfo: { appns: helixgitpx, applabel: "app=repo-service", appkind: deployment }
+  experiments:
+    - name: pod-network-partition
+      spec:
+        components:
+          env:
+            - { name: TOTAL_CHAOS_DURATION, value: "180" }
+            - { name: POLICY_TYPES, value: "ingress,egress" }
+            - { name: DESTINATION_IPS, value: "" }
+            - { name: DESTINATION_HOSTS, value: "helixgitpx-pg-a-rw.postgres.svc" }

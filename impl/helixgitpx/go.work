@@ -9,6 +9,7 @@ use (
 	./services/ai-service
 	./services/audit
 	./services/auth
+	./services/billing-service
 	./services/collab-service
 	./services/conflict-resolver
 	./services/git-ingress

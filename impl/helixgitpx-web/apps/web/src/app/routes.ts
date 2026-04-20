@@ -9,6 +9,7 @@ import { IssuesComponent } from './issues/issues.component';
 import { ConflictsComponent } from './conflicts/conflicts.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SearchComponent } from './search/search.component';
+import { TrustCenterComponent } from './trust-center/trust-center.component';
 import { authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
@@ -23,4 +24,5 @@ export const routes: Routes = [
   { path: 'conflicts', component: ConflictsComponent, canActivate: [authGuard] },
   { path: 'search', component: SearchComponent, canActivate: [authGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [authGuard] },
+  { path: 'trust', component: TrustCenterComponent },
 ];

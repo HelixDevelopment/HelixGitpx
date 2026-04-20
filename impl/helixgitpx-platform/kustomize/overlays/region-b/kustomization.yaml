@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: helixgitpx
+resources:
+  - ../../base
+commonLabels:
+  helixgitpx.io/region: eu-west-2
+  helixgitpx.io/role: secondary
+configMapGenerator:
+  - name: region-config
+    literals:
+      - REGION=eu-west-2
+      - ROLE=secondary
+      - KAFKA_CLUSTER=helixgitpx-kafka-b
+      - POSTGRES_CLUSTER=helixgitpx-pg-b

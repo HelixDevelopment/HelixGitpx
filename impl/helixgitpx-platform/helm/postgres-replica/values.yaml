@@ -1,0 +1,19 @@
+instances: 3
+storage: 500Gi
+source:
+  host: helixgitpx-pg-a-rw.postgres.svc.cluster.region-a.internal
+  user: streaming_replica
+  passwordSecret: helixgitpx-pg-replica-creds
+publications:
+  - name: helixgitpx_all
+    schemas:
+      - hello
+      - org
+      - team
+      - repo
+      - upstream
+      - sync
+      - conflict
+      - collab
+      - audit
+      - platform

@@ -1,0 +1,4 @@
+GET /api/v1/orgs HTTP/9.9
+Host: api.helixgitpx.io
+X-Forwarded-For: 127.0.0.1, 127.0.0.1, 127.0.0.1,,,,
+

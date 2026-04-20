@@ -1,0 +1,15 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata: { name: disk-full, namespace: helixgitpx }
+spec:
+  engineState: active
+  chaosServiceAccount: litmus-admin
+  appinfo: { appns: helixgitpx, applabel: "app=git-ingress", appkind: deployment }
+  experiments:
+    - name: disk-fill
+      spec:
+        components:
+          env:
+            - { name: TOTAL_CHAOS_DURATION, value: "120" }
+            - { name: FILL_PERCENTAGE, value: "85" }
+            - { name: CONTAINER_PATH, value: "/var/lib/git" }

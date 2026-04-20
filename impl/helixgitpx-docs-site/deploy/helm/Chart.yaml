@@ -1,0 +1,6 @@
+apiVersion: v2
+name: helixgitpx-docs-site
+description: Docusaurus static site (public docs)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,17 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata: { name: upstream-429-storm, namespace: helixgitpx }
+spec:
+  engineState: active
+  chaosServiceAccount: litmus-admin
+  appinfo: { appns: helixgitpx, applabel: "app=adapter-pool", appkind: deployment }
+  experiments:
+    - name: pod-http-status-code
+      spec:
+        components:
+          env:
+            - { name: TOTAL_CHAOS_DURATION, value: "300" }
+            - { name: TARGET_SERVICE_PORT, value: "8080" }
+            - { name: STATUS_CODE, value: "429" }
+            - { name: MODIFY_RESPONSE_BODY, value: "true" }
+            - { name: RESPONSE_BODY, value: "rate limit exceeded" }

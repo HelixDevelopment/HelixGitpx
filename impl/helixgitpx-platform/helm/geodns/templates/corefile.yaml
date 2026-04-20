@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: geodns-corefile
+data:
+  Corefile: |
+    {{ .Values.zone }}:53 {
+        errors
+        health :8080
+        ready
+        prometheus :9153
+        geoip /etc/geoip/GeoLite2-Country.mmdb
+        {{- range .Values.regions }}
+        rewrite name exact api.{{ .name }}.{{ $.Values.zone }} {{ .endpoint }}
+        {{- end }}
+        loadbalance round_robin
+        log
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geodns
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels: { app: geodns }
+  template:
+    metadata:
+      labels: { app: geodns }
+    spec:
+      containers:
+        - name: coredns
+          image: coredns/coredns:{{ .Chart.AppVersion }}
+          args: ["-conf", "/etc/coredns/Corefile"]
+          ports:
+            - { name: dns, containerPort: 53, protocol: UDP }
+            - { name: dns-tcp, containerPort: 53, protocol: TCP }
+            - { name: metrics, containerPort: 9153 }
+          volumeMounts:
+            - { name: config, mountPath: /etc/coredns }
+            - { name: geoip, mountPath: /etc/geoip }
+          readinessProbe:
+            httpGet: { path: /ready, port: 8181 }
+      volumes:
+        - { name: config, configMap: { name: geodns-corefile } }
+        - { name: geoip, secret: { secretName: geoip-database } }

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: geodns
+description: CoreDNS + geoip plugin for cross-region failover
+type: application
+version: 0.1.0
+appVersion: "1.11.3"

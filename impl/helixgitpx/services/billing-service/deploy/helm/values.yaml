@@ -1,0 +1,14 @@
+image:
+  repository: ghcr.io/helixgitpx/billing-service
+  tag: dev
+  pullPolicy: IfNotPresent
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits: { cpu: 500m, memory: 512Mi }
+service:
+  port: 8080
+ingress:
+  enabled: false
+stripe:
+  apiKeySecret: billing-stripe-key

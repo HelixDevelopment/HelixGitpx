@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: helixgitpx-perf-soak-7d
+  namespace: perf
+spec:
+  entrypoint: soak
+  templates:
+    - name: soak
+      steps:
+        - - name: baseline
+            template: k6-run
+            arguments: { parameters: [ { name: script, value: api_baseline.js }, { name: duration, value: "168h" } ] }
+          - name: ai
+            template: k6-run
+            arguments: { parameters: [ { name: script, value: ai_chat.js }, { name: duration, value: "168h" } ] }
+    - name: k6-run
+      inputs: { parameters: [ { name: script }, { name: duration } ] }
+      container:
+        image: grafana/k6:0.52.0
+        command: [k6, run]
+        args: ["--duration", "{{inputs.parameters.duration}}", "/scenarios/{{inputs.parameters.script}}"]
+        volumeMounts:
+          - { name: scenarios, mountPath: /scenarios }
+      volumes:
+        - { name: scenarios, configMap: { name: k6-scenarios } }

@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mirrormaker2
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+spec:
+  project: helixgitpx-region-b
+  source:
+    repoURL: https://github.com/HelixGitpx/HelixGitpx.git
+    path: impl/helixgitpx-platform/helm/mirrormaker2
+    targetRevision: main
+    helm:
+      releaseName: mirrormaker2
+  destination:
+    server: https://kubernetes.region-b.internal
+    namespace: kafka
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]
