@@ -1,0 +1,11 @@
+{
+  "app.title": "HelixGitpx",
+  "nav.dashboard": "Dashboard",
+  "nav.repos": "Repositories",
+  "nav.prs": "Pull Requests",
+  "nav.issues": "Issues",
+  "nav.conflicts": "Conflicts",
+  "nav.search": "Search",
+  "nav.settings": "Settings",
+  "auth.signin": "Sign in"
+}
