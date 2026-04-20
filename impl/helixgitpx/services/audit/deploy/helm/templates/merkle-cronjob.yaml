@@ -1,0 +1,19 @@
+{{- if .Values.merkle.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-merkle
+spec:
+  schedule: {{ .Values.merkle.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: merkle
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              command: ["/app/audit-merkle"]
+              envFrom:
+                - secretRef: { name: audit-pg-secret }
+{{- end }}

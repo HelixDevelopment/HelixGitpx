@@ -1,0 +1,38 @@
+image:
+  repository: helixgitpx/hello
+  tag: dev
+  pullPolicy: IfNotPresent
+env:
+  HELLO_HTTP_ADDR: ":8001"
+  HELLO_GRPC_ADDR: ":9001"
+  HELLO_HEALTH_ADDR: ":8081"
+resources:
+  limits:   { cpu: "1", memory: "256Mi" }
+  requests: { cpu: "100m", memory: "128Mi" }
+
+migrate:
+  enabled: true
+  image:
+    repository: helixgitpx/hello
+    tag: dev
+  env:
+    - name: HELLO_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: hello-pg-secret
+          key: dsn
+
+ingress:
+  enabled: true
+  className: nginx
+  host: hello.helix.local
+  tlsSecret: hello-helix-local-tls
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+vault:
+  enabled: true
+  role: hello
+  kvPath: kv/hello
