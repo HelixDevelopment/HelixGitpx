@@ -1,0 +1,4 @@
+meilisearch:
+  replicas: 1
+  persistence:
+    size: 5Gi

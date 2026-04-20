@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opensearch-ilm-policies
+  namespace: helix-cache
+data:
+  logs-7d.json: |-
+    {
+      "policy": {
+        "policy_id": "logs-7d",
+        "description": "Logs hot 3d → warm 4d → delete",
+        "default_state": "hot",
+        "states": [
+          {
+            "name": "hot",
+            "actions": [{"rollover": {"min_index_age": "1d"}}],
+            "transitions": [{"state_name": "warm", "conditions": {"min_index_age": "3d"}}]
+          },
+          {
+            "name": "warm",
+            "actions": [{"replica_count": {"number_of_replicas": 1}}],
+            "transitions": [{"state_name": "delete", "conditions": {"min_index_age": "7d"}}]
+          },
+          {"name": "delete", "actions": [{"delete": {}}]}
+        ]
+      }
+    }

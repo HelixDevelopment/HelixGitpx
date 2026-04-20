@@ -1,0 +1,7 @@
+meilisearch:
+  replicas: 3
+  auth:
+    existingMasterKeySecret: meilisearch-master-key
+  persistence:
+    enabled: true
+    size: 20Gi

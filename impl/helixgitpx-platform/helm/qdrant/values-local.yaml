@@ -1,0 +1,4 @@
+qdrant:
+  replicaCount: 1
+  persistence:
+    size: 5Gi

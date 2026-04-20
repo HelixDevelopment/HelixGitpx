@@ -1,0 +1,9 @@
+apiVersion: v2
+name: meilisearch
+description: Meilisearch full-text index
+type: application
+version: 0.1.0
+dependencies:
+  - name: meilisearch
+    version: "1.3.0"
+    repository: https://meilisearch.github.io/meilisearch-kubernetes

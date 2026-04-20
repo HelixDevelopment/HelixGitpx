@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: opensearch-snapshot-repo-init
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: curl
+          image: curlimages/curl:8.11.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              curl -fsSL -XPUT "http://helix-os-opensearch.helix-cache.svc:9200/_snapshot/minio-s3" \
+                  -H 'Content-Type: application/json' \
+                  -d '{
+                    "type": "s3",
+                    "settings": {
+                      "bucket": "opensearch-snapshots",
+                      "endpoint": "minio.helix-system.svc:9000",
+                      "protocol": "http",
+                      "path_style_access": "true"
+                    }
+                  }'
+              curl -fsSL -XPUT "http://helix-os-opensearch.helix-cache.svc:9200/_plugins/_ism/policies/logs-7d" \
+                  -H 'Content-Type: application/json' \
+                  --data-binary '@/policies/logs-7d.json'
+          volumeMounts:
+            - { name: policies, mountPath: /policies, readOnly: true }
+      volumes:
+        - name: policies
+          configMap:
+            name: opensearch-ilm-policies

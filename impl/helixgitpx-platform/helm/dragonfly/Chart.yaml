@@ -1,0 +1,9 @@
+apiVersion: v2
+name: dragonfly
+description: Dragonfly (Redis-compatible) cache
+type: application
+version: 0.1.0
+dependencies:
+  - name: dragonfly
+    version: "0.7.0"
+    repository: https://dragonflydb.io/helm

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: opensearch
+description: OpenSearch + ILM + MinIO snapshots
+type: application
+version: 0.1.0
+dependencies:
+  - name: opensearch
+    version: "2.25.0"
+    repository: https://opensearch-project.github.io/helm-charts

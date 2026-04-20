@@ -1,0 +1,9 @@
+apiVersion: v2
+name: qdrant
+description: Qdrant vector database
+type: application
+version: 0.1.0
+dependencies:
+  - name: qdrant
+    version: "1.12.4"
+    repository: https://qdrant.github.io/qdrant-helm

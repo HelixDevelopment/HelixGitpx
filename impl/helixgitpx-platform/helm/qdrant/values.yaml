@@ -1,0 +1,5 @@
+qdrant:
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: 20Gi

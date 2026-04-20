@@ -1,0 +1,13 @@
+opensearch:
+  clusterName: helix-os
+  replicas: 3
+  persistence:
+    enabled: true
+    size: 50Gi
+  config:
+    opensearch.yml: |
+      cluster.name: helix-os
+      network.host: 0.0.0.0
+      plugins.security.disabled: true
+  serviceMonitor:
+    enabled: true

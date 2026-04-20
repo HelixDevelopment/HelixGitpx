@@ -1,0 +1,4 @@
+opensearch:
+  replicas: 1
+  persistence:
+    size: 10Gi
