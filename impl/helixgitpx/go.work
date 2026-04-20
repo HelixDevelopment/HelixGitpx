@@ -9,5 +9,6 @@ use (
 	./services/auth
 	./services/hello
 	./services/orgteam
+	./services/repo
 	./tools/scaffold
 )
