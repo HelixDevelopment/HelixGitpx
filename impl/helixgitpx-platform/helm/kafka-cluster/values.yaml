@@ -18,3 +18,7 @@ topics:
     partitions: 3
     replicas: 3
     retentionMs: 2592000000
+  - name: audit.events
+    partitions: 6
+    replicas: 3
+    retentionMs: -1
