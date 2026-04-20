@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mimir
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  source:
+    repoURL: "{{ env REPO_URL }}"
+    targetRevision: main
+    path: impl/helixgitpx-platform/helm/mimir
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-{{ env HELIX_ENV | default "local" }}.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: helix-observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

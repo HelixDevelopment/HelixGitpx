@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: qdrant
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  source:
+    repoURL: "{{ env REPO_URL }}"
+    targetRevision: main
+    path: impl/helixgitpx-platform/helm/qdrant
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-{{ env HELIX_ENV | default "local" }}.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: helix-cache
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
