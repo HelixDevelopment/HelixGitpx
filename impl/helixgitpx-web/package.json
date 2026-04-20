@@ -1,0 +1,33 @@
+{
+  "name": "helixgitpx-web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "postinstall": "nx sync",
+    "start": "nx serve web",
+    "build": "nx build web",
+    "test": "nx test",
+    "lint": "nx lint"
+  },
+  "devDependencies": {
+    "@angular/cli": "19.0.6",
+    "@angular/core": "19.0.5",
+    "@angular/common": "19.0.5",
+    "@angular/compiler": "19.0.5",
+    "@angular/compiler-cli": "19.0.5",
+    "@angular/platform-browser": "19.0.5",
+    "@angular/platform-browser-dynamic": "19.0.5",
+    "@angular/router": "19.0.5",
+    "@bufbuild/protoc-gen-es": "2.2.3",
+    "@connectrpc/protoc-gen-connect-es": "1.6.1",
+    "@connectrpc/connect-web": "1.6.1",
+    "@nx/angular": "20.3.0",
+    "@nx/eslint": "20.3.0",
+    "@nx/jest": "20.3.0",
+    "@nx/workspace": "20.3.0",
+    "nx": "20.3.0",
+    "typescript": "5.6.3",
+    "@playwright/test": "1.49.1",
+    "@lhci/cli": "0.14.0"
+  }
+}
