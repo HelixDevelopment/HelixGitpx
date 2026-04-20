@@ -1,0 +1,37 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: {{ .Values.kafka.name }}
+  namespace: helix-data
+  annotations:
+    strimzi.io/node-pools: "enabled"
+    strimzi.io/kraft: "enabled"
+spec:
+  kafka:
+    version: 3.8.0
+    replicas: {{ .Values.kafka.replicas }}
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: {{ .Values.kafka.replicas }}
+      transaction.state.log.replication.factor: {{ .Values.kafka.replicas }}
+      transaction.state.log.min.isr: {{ sub .Values.kafka.replicas 1 | default 1 }}
+      default.replication.factor: {{ .Values.kafka.replicas }}
+      min.insync.replicas: {{ sub .Values.kafka.replicas 1 | default 1 }}
+      inter.broker.protocol.version: "3.8"
+    storage:
+      type: persistent-claim
+      size: {{ .Values.kafka.storage.size }}
+      deleteClaim: false
+    resources:
+      {{- toYaml .Values.kafka.resources | nindent 6 }}
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

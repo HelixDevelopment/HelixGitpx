@@ -1,0 +1,13 @@
+kafka:
+  replicas: 1
+  storage:
+    size: 10Gi
+topics:
+  - name: hello.said
+    partitions: 3
+    replicas: 1
+    retentionMs: 604800000
+  - name: hello.outbox
+    partitions: 3
+    replicas: 1
+    retentionMs: 2592000000

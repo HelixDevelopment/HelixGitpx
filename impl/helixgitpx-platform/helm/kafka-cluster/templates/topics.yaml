@@ -1,0 +1,16 @@
+{{- range .Values.topics }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ .name | replace "." "-" }}
+  namespace: helix-data
+  labels:
+    strimzi.io/cluster: {{ $.Values.kafka.name }}
+spec:
+  partitions: {{ .partitions }}
+  replicas: {{ .replicas }}
+  config:
+    retention.ms: "{{ .retentionMs }}"
+    min.insync.replicas: "{{ sub .replicas 1 | default 1 }}"
+{{- end }}
