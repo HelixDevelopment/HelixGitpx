@@ -1,41 +1,52 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
-<BaseLayout title="Trust center" description="Security posture, certifications, audits, and real-time status.">
+<BaseLayout title="Trust center" description="Security posture, planned audits, and transparency.">
   <section class="mx-auto max-w-5xl px-6 py-16">
     <h1 class="text-5xl font-semibold">Trust center</h1>
-    <p class="mt-4 text-slate-600">Security, compliance, and transparency. Current posture as of release v1.0.</p>
+    <p class="mt-4 text-slate-600">
+      Honest disclosure of the project's current security posture. HelixGitpx is
+      open source (Apache-2.0 / CC-BY-SA-4.0); there is no hosted Service yet.
+      This page describes what a future hosted operator can offer, plus what the
+      project ships by default for self-hosters.
+    </p>
 
     <div class="mt-12 grid md:grid-cols-2 gap-6">
-      <a href="https://status.helixgitpx.io" class="rounded-xl border border-slate-200 p-6 hover:border-primary">
-        <div class="text-sm uppercase tracking-wider text-slate-500">Realtime</div>
-        <div class="mt-2 text-xl font-semibold">Status page</div>
-        <div class="mt-2 text-sm text-slate-600">Per-service uptime, current incidents, scheduled maintenance.</div>
-      </a>
       <a href="/security" class="rounded-xl border border-slate-200 p-6 hover:border-primary">
-        <div class="text-sm uppercase tracking-wider text-slate-500">Policy</div>
-        <div class="mt-2 text-xl font-semibold">Security policy</div>
-        <div class="mt-2 text-sm text-slate-600">Incident response, data classification, retention, and disclosure.</div>
+        <div class="text-sm uppercase tracking-wider text-slate-500">Built in</div>
+        <div class="mt-2 text-xl font-semibold">Security posture</div>
+        <div class="mt-2 text-sm text-slate-600">TLS, mTLS via SPIFFE, OPA authorization, signed SBOMs, supply-chain CI.</div>
+      </a>
+      <a href="https://github.com/HelixDevelopment/HelixGitpx/blob/main/docs/UNFINISHED.md"
+         class="rounded-xl border border-slate-200 p-6 hover:border-primary">
+        <div class="text-sm uppercase tracking-wider text-slate-500">Disclosure</div>
+        <div class="mt-2 text-xl font-semibold">What's not yet done</div>
+        <div class="mt-2 text-sm text-slate-600">Living inventory of every gap, with reasons.</div>
       </a>
     </div>
 
-    <h2 class="mt-16 text-2xl font-semibold">Certifications & audits</h2>
+    <h2 class="mt-16 text-2xl font-semibold">Compliance posture</h2>
+    <p class="mt-2 text-slate-600">No active certifications. The project ships the technical controls and the evidence-collection tooling so an operator of a hosted Service can pursue audits on their own timeline.</p>
     <ul class="mt-4 space-y-3 text-slate-700">
-      <li><span class="inline-block w-24 text-sm text-slate-500">SOC 2 Type I</span> Report available under NDA.</li>
-      <li><span class="inline-block w-24 text-sm text-slate-500">ISO 27001</span> Gap analysis complete; certification in progress.</li>
-      <li><span class="inline-block w-24 text-sm text-slate-500">Pen-test</span> Annual external third-party; most recent 2026 Q2.</li>
-      <li><span class="inline-block w-24 text-sm text-slate-500">Bug bounty</span> Live on <a href="https://hackerone.com/helixgitpx" class="text-primary hover:underline">HackerOne</a>.</li>
+      <li><span class="inline-block w-28 text-sm text-slate-500">SOC 2</span> Evidence mapping committed under <code>docs/security/soc2-type1-evidence-index.md</code>. No report has been issued; no auditor engaged.</li>
+      <li><span class="inline-block w-28 text-sm text-slate-500">ISO 27001</span> Gap analysis committed under <code>docs/security/iso27001-gap-analysis.md</code>. No certification in progress.</li>
+      <li><span class="inline-block w-28 text-sm text-slate-500">Pen-test</span> Scope document committed under <code>docs/security/pentest-scope-2026q2.md</code>. No vendor engaged; no test conducted.</li>
+      <li><span class="inline-block w-28 text-sm text-slate-500">Bug bounty</span> Program rules committed under <code>docs/security/bug-bounty-program.md</code>. Not yet live on any platform.</li>
     </ul>
 
     <h2 class="mt-16 text-2xl font-semibold">Sub-processors</h2>
-    <p class="mt-2 text-slate-600">Current list: <a href="/subprocessors" class="text-primary hover:underline">/subprocessors</a>. We notify customers 30 days before adding or removing one.</p>
+    <p class="mt-2 text-slate-600">None — there is no hosted Service. The <a href="/subprocessors" class="text-primary hover:underline">subprocessors page</a> is a template for future operators.</p>
 
-    <h2 class="mt-16 text-2xl font-semibold">Data residency</h2>
-    <p class="mt-2 text-slate-600">Per-org residency toggle (EU / UK / US). Data stays in the region you pick.</p>
+    <h2 class="mt-16 text-2xl font-semibold">Data residency (self-hosted)</h2>
+    <p class="mt-2 text-slate-600">Per-org residency is an implemented feature (<code>org.organizations.residency</code> column + <code>SetOrgResidency</code> RPC). Your data stays wherever you run the cluster; there is no HelixGitpx cloud today.</p>
 
     <h2 class="mt-16 text-2xl font-semibold">Report a vulnerability</h2>
     <p class="mt-2 text-slate-600">
-      Public: HackerOne (rewards up to $25 000). Private: <a href="mailto:security@helixgitpx.io" class="text-primary hover:underline">security@helixgitpx.io</a>.
+      Open a security advisory on
+      <a href="https://github.com/HelixDevelopment/HelixGitpx/security/advisories" class="text-primary hover:underline">GitHub</a>
+      or email the maintainer (see the GitHub profile). There is no public
+      bug-bounty program yet; when a hosted Service launches, this page
+      will link to the HackerOne program at that point.
     </p>
   </section>
 </BaseLayout>
