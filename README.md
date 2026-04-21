@@ -28,6 +28,7 @@ The Constitution is the load-bearing document. The mandatory testing matrix (sev
 | User manuals (all formats) | [`docs/manuals/`](docs/manuals/) |
 | Video curriculum | [`docs/media/`](docs/media/) |
 | Integration plans | [`docs/integrations/`](docs/integrations/) |
+| **What is NOT finished (and why)** | [`docs/UNFINISHED.md`](docs/UNFINISHED.md) |
 
 ## Quick start
 
