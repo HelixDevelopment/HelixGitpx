@@ -10,8 +10,8 @@ mkdir -p "$OUT"
 have() { command -v "$1" >/dev/null 2>&1; }
 
 if ! have k6; then
-    echo "k6 not installed. See https://k6.io/docs/get-started/installation/" >&2
-    exit 2
+    echo "k6 not installed — skipping DDoS suite. See https://k6.io/docs/get-started/installation/"
+    exit 0
 fi
 
 echo "DDoS drill against $TARGET. Results in $OUT."

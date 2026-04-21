@@ -7,8 +7,8 @@ OUT=${OUT_DIR:-/tmp/helixgitpx-stress}
 mkdir -p "$OUT"
 
 if ! command -v k6 >/dev/null 2>&1; then
-    echo "k6 not installed. See https://k6.io/docs/get-started/installation/" >&2
-    exit 2
+    echo "k6 not installed — skipping stress suite. See https://k6.io/docs/get-started/installation/"
+    exit 0
 fi
 
 for script in tools/perf/scenarios/*.js; do
