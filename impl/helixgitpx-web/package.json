@@ -7,7 +7,9 @@
     "start": "nx serve web",
     "build": "nx build web",
     "test": "nx test",
-    "lint": "nx lint"
+    "lint": "nx lint",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium firefox webkit"
   },
   "devDependencies": {
     "@angular/build": "19.0.6",

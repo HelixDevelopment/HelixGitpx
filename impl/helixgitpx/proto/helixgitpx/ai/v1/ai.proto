@@ -1,0 +1,63 @@
+syntax = "proto3";
+package helixgitpx.ai.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service AIService {
+  rpc Summarize(SummarizeRequest) returns (SummarizeResponse);
+  rpc ProposeConflictResolution(ProposeConflictResolutionRequest) returns (ConflictProposal);
+  rpc SuggestLabel(SuggestLabelRequest) returns (SuggestLabelResponse);
+  rpc Chat(ChatRequest) returns (stream ChatMessage);
+  rpc Feedback(FeedbackRequest) returns (google.protobuf.Empty);
+}
+
+message SummarizeRequest {
+  string target_kind = 1;              // "pr" | "issue" | "commit"
+  string target_id = 2;
+  string content = 3;
+  int32 max_words = 4;
+}
+message SummarizeResponse {
+  string summary = 1;
+  string model = 2;
+  double confidence = 3;
+}
+
+message ProposeConflictResolutionRequest {
+  string conflict_id = 1;
+  bytes context = 2;
+}
+message ConflictProposal {
+  string conflict_id = 1;
+  string rationale = 2;
+  bytes patch = 3;
+  double confidence = 4;
+  string model = 5;
+}
+
+message SuggestLabelRequest {
+  string target_kind = 1;
+  string target_id = 2;
+  string content = 3;
+  repeated string available_labels = 4;
+}
+message SuggestLabelResponse { repeated string labels = 1; string model = 2; }
+
+message ChatRequest {
+  string conversation_id = 1;
+  string actor_id = 2;
+  repeated ChatMessage messages = 3;
+}
+message ChatMessage {
+  string role = 1;                     // "user" | "assistant" | "system"
+  string content = 2;
+  google.protobuf.Timestamp at = 3;
+}
+
+message FeedbackRequest {
+  string decision_id = 1;
+  string verdict = 2;                  // "accept" | "reject" | "edit"
+  string actor_id = 3;
+  string notes = 4;
+}

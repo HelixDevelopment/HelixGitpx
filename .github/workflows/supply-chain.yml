@@ -1,49 +1,114 @@
 name: supply-chain
+# Per-service container build + SBOM (Syft, CycloneDX + SPDX) + Cosign
+# keyless signature + in-toto SLSA provenance + Trivy scan.
+# Constitution §VI: SLSA Level 3 at GA.
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        type: string
-        default: main
+      services:
+        description: 'Comma-separated service names or `all`'
+        required: true
+        default: 'all'
+      registry:
+        description: 'Registry prefix'
+        required: true
+        default: 'ghcr.io/helixgitpx'
+      tag:
+        description: 'Image tag'
+        required: true
+
 permissions:
   contents: read
   packages: write
   id-token: write
   attestations: write
+
 jobs:
-  sbom:
+  enumerate:
     runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.list.outputs.services }}
     steps:
       - uses: actions/checkout@v4
+      - id: list
+        run: |
+          if [ "${{ github.event.inputs.services }}" = "all" ]; then
+            services=$(ls impl/helixgitpx/services | jq -R -s -c 'split("\n") | map(select(length>0))')
+          else
+            services=$(echo "${{ github.event.inputs.services }}" | tr ',' '\n' | jq -R -s -c 'split("\n") | map(select(length>0))')
+          fi
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+
+  sbom-sign-scan:
+    needs: enumerate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.enumerate.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.23.4' }
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
-          ref: ${{ inputs.ref }}
-      - uses: anchore/sbom-action@v0
+          registry: ${{ github.event.inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: build
+        uses: docker/build-push-action@v6
         with:
-          path: .
+          context: impl/helixgitpx
+          file: impl/helixgitpx/services/${{ matrix.service }}/deploy/Dockerfile
+          push: true
+          tags: ${{ github.event.inputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+
+      - name: SBOM CycloneDX
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ github.event.inputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
           format: cyclonedx-json
-          output-file: sbom.cdx.json
-      - uses: anchore/sbom-action@v0
+          artifact-name: sbom-${{ matrix.service }}.cdx.json
+
+      - name: SBOM SPDX
+        uses: anchore/sbom-action@v0
         with:
-          path: .
+          image: ${{ github.event.inputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
           format: spdx-json
-          output-file: sbom.spdx.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sboms
-          path: "sbom.*.json"
-  cosign:
-    runs-on: ubuntu-latest
-    if: ${{ env.COSIGN_PASSWORD != '' }}
-    env:
-      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
+          artifact-name: sbom-${{ matrix.service }}.spdx.json
+
       - uses: sigstore/cosign-installer@v3
-      - run: echo "cosign-ready"
-  slsa-provenance:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/attest-build-provenance@v2
+
+      - name: Cosign sign (keyless)
+        env:
+          COSIGN_EXPERIMENTAL: '1'
+        run: |
+          cosign sign --yes \
+            ${{ github.event.inputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+
+      - name: Attach CycloneDX attestation
+        env:
+          COSIGN_EXPERIMENTAL: '1'
+        run: |
+          cosign attest --yes \
+            --predicate sbom-${{ matrix.service }}.cdx.json \
+            --type cyclonedx \
+            ${{ github.event.inputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+
+      - name: SLSA build provenance
+        uses: actions/attest-build-provenance@v2
         with:
-          subject-path: 'impl/helixgitpx/services/*/deploy/Dockerfile'
+          subject-name: ${{ github.event.inputs.registry }}/${{ matrix.service }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ github.event.inputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true

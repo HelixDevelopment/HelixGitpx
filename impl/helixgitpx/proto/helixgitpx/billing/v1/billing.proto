@@ -1,0 +1,62 @@
+syntax = "proto3";
+package helixgitpx.billing.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// BillingService exposes plan management. Wraps Stripe; other PSPs pluggable
+// via the internal provider.Provider interface.
+service BillingService {
+  rpc GetSubscription(GetSubscriptionRequest) returns (Subscription);
+  rpc UpgradePlan(UpgradePlanRequest) returns (Subscription);
+  rpc DowngradePlan(DowngradePlanRequest) returns (Subscription);
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (Subscription);
+  rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
+  rpc DownloadInvoice(DownloadInvoiceRequest) returns (InvoiceDownload);
+}
+
+enum Plan {
+  PLAN_UNSPECIFIED = 0;
+  PLAN_FREE = 1;
+  PLAN_TEAM = 2;
+  PLAN_SCALE = 3;
+  PLAN_ENTERPRISE = 4;
+}
+
+enum SubscriptionStatus {
+  SUBSCRIPTION_STATUS_UNSPECIFIED = 0;
+  SUBSCRIPTION_STATUS_ACTIVE = 1;
+  SUBSCRIPTION_STATUS_PAST_DUE = 2;
+  SUBSCRIPTION_STATUS_CANCELED = 3;
+  SUBSCRIPTION_STATUS_UNPAID = 4;
+}
+
+message Subscription {
+  string id = 1;
+  string org_id = 2;
+  string customer_id = 3;
+  Plan plan = 4;
+  SubscriptionStatus status = 5;
+  int32 seats = 6;
+  google.protobuf.Timestamp current_period_end = 7;
+  google.protobuf.Timestamp cancelled_at = 8;
+}
+
+message Invoice {
+  string id = 1;
+  string subscription_id = 2;
+  int64 amount_cents = 3;
+  string currency = 4;
+  string status = 5;
+  google.protobuf.Timestamp issued_at = 6;
+  google.protobuf.Timestamp paid_at = 7;
+  string hosted_url = 8;
+}
+
+message GetSubscriptionRequest { string org_id = 1; }
+message UpgradePlanRequest { string subscription_id = 1; Plan plan = 2; int32 seats = 3; }
+message DowngradePlanRequest { string subscription_id = 1; Plan plan = 2; }
+message CancelSubscriptionRequest { string subscription_id = 1; bool immediate = 2; }
+message ListInvoicesRequest { string subscription_id = 1; int32 limit = 2; }
+message ListInvoicesResponse { repeated Invoice invoices = 1; }
+message DownloadInvoiceRequest { string invoice_id = 1; }
+message InvoiceDownload { string url = 1; bytes pdf = 2; }

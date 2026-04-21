@@ -1,0 +1,70 @@
+syntax = "proto3";
+package helixgitpx.search.v1;
+
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc CodeSearch(CodeSearchRequest) returns (CodeSearchResponse);
+  rpc IndexStatus(IndexStatusRequest) returns (IndexStatusResponse);
+}
+
+enum SearchMode {
+  SEARCH_MODE_UNSPECIFIED = 0;
+  SEARCH_MODE_HYBRID = 1;              // RRF fusion: keyword + vector + code
+  SEARCH_MODE_KEYWORD = 2;
+  SEARCH_MODE_VECTOR = 3;
+  SEARCH_MODE_CODE = 4;
+}
+
+message SearchRequest {
+  string query = 1;
+  string org_id = 2;
+  repeated string repo_ids = 3;
+  SearchMode mode = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+message SearchResponse {
+  repeated SearchHit hits = 1;
+  int64 total = 2;
+  int64 elapsed_ms = 3;
+  SearchMode actual_mode = 4;
+}
+
+message SearchHit {
+  string id = 1;
+  string kind = 2;                     // "repo" | "pr" | "issue" | "comment" | "file"
+  string title = 3;
+  string snippet = 4;
+  string url = 5;
+  double score = 6;
+  double keyword_score = 7;
+  double vector_score = 8;
+  double code_score = 9;
+}
+
+message CodeSearchRequest {
+  string query = 1;                    // Zoekt regex syntax
+  string org_id = 2;
+  repeated string repo_ids = 3;
+  int32 limit = 4;
+}
+message CodeSearchResponse {
+  repeated CodeHit hits = 1;
+  int64 elapsed_ms = 2;
+}
+message CodeHit {
+  string repo_id = 1;
+  string path = 2;
+  int32 line = 3;
+  string preview = 4;
+}
+
+message IndexStatusRequest { string repo_id = 1; }
+message IndexStatusResponse {
+  bool meilisearch_ready = 1;
+  bool qdrant_ready = 2;
+  bool zoekt_ready = 3;
+  int64 keyword_doc_count = 4;
+  int64 vector_doc_count = 5;
+}

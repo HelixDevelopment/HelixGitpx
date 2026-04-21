@@ -1,0 +1,48 @@
+syntax = "proto3";
+package helixgitpx.webhook.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// WebhookGatewayService is the internal RPC surface for the webhook-gateway.
+// Inbound HTTP webhooks from providers are handled on the REST side; this
+// service exposes admin operations (list deliveries, replay, rotate secrets).
+service WebhookGatewayService {
+  rpc ListDeliveries(ListDeliveriesRequest) returns (ListDeliveriesResponse);
+  rpc GetDelivery(GetDeliveryRequest) returns (Delivery);
+  rpc Replay(ReplayRequest) returns (Delivery);
+  rpc RotateSecret(RotateSecretRequest) returns (google.protobuf.Empty);
+}
+
+enum DeliveryStatus {
+  DELIVERY_STATUS_UNSPECIFIED = 0;
+  DELIVERY_STATUS_ACCEPTED = 1;
+  DELIVERY_STATUS_REJECTED = 2;        // HMAC / schema failed
+  DELIVERY_STATUS_PUBLISHED = 3;       // emitted to Kafka
+  DELIVERY_STATUS_DLQ = 4;
+}
+
+message Delivery {
+  string id = 1;
+  string provider = 2;                 // "github" | "gitlab" | …
+  string event_type = 3;
+  string repo_id = 4;
+  DeliveryStatus status = 5;
+  bytes raw_body_hash = 6;
+  string signature = 7;
+  google.protobuf.Timestamp received_at = 8;
+  string kafka_offset = 9;
+}
+
+message ListDeliveriesRequest {
+  string provider = 1;
+  string repo_id = 2;
+  DeliveryStatus status = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+message ListDeliveriesResponse { repeated Delivery deliveries = 1; string next_page_token = 2; }
+
+message GetDeliveryRequest { string id = 1; }
+message ReplayRequest { string id = 1; }
+message RotateSecretRequest { string provider = 1; string repo_id = 2; }

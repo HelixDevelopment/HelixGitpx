@@ -1,0 +1,57 @@
+name: ci-verifiers
+on:
+  workflow_dispatch:
+    inputs:
+      run_cluster_probes:
+        description: 'Also run cluster-probing verifiers (requires kubectl context)'
+        required: true
+        default: 'false'
+
+jobs:
+  green-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.23.4' }
+
+      - name: Install Python yaml
+        run: python3 -m pip install --user pyyaml
+
+      - name: Artifact verifiers
+        run: |
+          bash scripts/verify-m1-artifacts.sh
+          bash scripts/verify-m2-artifacts.sh
+
+      - name: Argo CD paths
+        run: bash scripts/verify-argo-paths.sh
+
+      - name: Helm chart lint
+        run: bash scripts/verify-helm-charts.sh
+
+      - name: Rego syntax
+        run: bash scripts/verify-rego.sh
+
+      - name: Go vet
+        working-directory: impl/helixgitpx
+        env: { GOTOOLCHAIN: go1.23.4 }
+        run: |
+          for mod in $(find . -name go.mod | xargs -n1 dirname); do
+            (cd "$mod" && go vet ./...)
+          done
+
+      - name: Go test
+        working-directory: impl/helixgitpx
+        env: { GOTOOLCHAIN: go1.23.4 }
+        run: |
+          for mod in $(find . -name go.mod | xargs -n1 dirname); do
+            (cd "$mod" && go test -race ./...)
+          done
+
+      - name: Cluster probes (optional)
+        if: ${{ github.event.inputs.run_cluster_probes == 'true' }}
+        run: |
+          for m in 2 3 4 5 6 7 8; do
+            bash "scripts/verify-m$m-cluster.sh"
+          done

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HelixGitpx</string>
+    <string name="tagline">One namespace. Every Git host.</string>
+    <string name="nav_repos">Repositories</string>
+    <string name="nav_prs">Pull requests</string>
+    <string name="nav_issues">Issues</string>
+    <string name="nav_conflicts">Conflicts</string>
+    <string name="nav_settings">Settings</string>
+</resources>

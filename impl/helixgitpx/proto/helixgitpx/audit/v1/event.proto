@@ -1,0 +1,65 @@
+syntax = "proto3";
+package helixgitpx.audit.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// AuditEvent is the canonical shape emitted to the `audit.events` Kafka topic
+// via the outbox pattern. Every service that mutates tenancy, repos, sync
+// state, policy, or AI outputs publishes AuditEvents.
+message AuditEvent {
+  string id = 1;
+  string source_service = 2;           // "orgteam-service", "repo-service", …
+  string action = 3;                   // dotted verb, e.g. "org.created"
+  string actor_id = 4;
+  string org_id = 5;
+  string repo_id = 6;                  // optional
+  string target_id = 7;                // the subject of the action
+  string target_kind = 8;              // "org", "repo", "pr", "policy", …
+  google.protobuf.Timestamp at = 9;
+  google.protobuf.Struct metadata = 10;
+  string trace_id = 11;
+  string span_id = 12;
+  Severity severity = 13;
+  string decision_id = 14;             // present when OPA was consulted
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_NOTICE = 2;
+  SEVERITY_WARNING = 3;
+  SEVERITY_ERROR = 4;
+  SEVERITY_CRITICAL = 5;
+}
+
+// AuditService is the query surface. Writes land via the outbox, not through
+// this RPC.
+service AuditService {
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+  rpc GetEvent(GetEventRequest) returns (AuditEvent);
+  rpc VerifyMerkleRoot(VerifyMerkleRootRequest) returns (VerifyMerkleRootResponse);
+}
+
+message ListEventsRequest {
+  string org_id = 1;
+  string repo_id = 2;
+  Severity min_severity = 3;
+  google.protobuf.Timestamp from = 4;
+  google.protobuf.Timestamp until = 5;
+  int32 page_size = 6;
+  string page_token = 7;
+}
+message ListEventsResponse { repeated AuditEvent events = 1; string next_page_token = 2; }
+
+message GetEventRequest { string id = 1; }
+
+message VerifyMerkleRootRequest {
+  bytes expected_root = 1;
+  google.protobuf.Timestamp as_of = 2;
+}
+message VerifyMerkleRootResponse {
+  bool verified = 1;
+  bytes observed_root = 2;
+  int64 leaf_count = 3;
+}

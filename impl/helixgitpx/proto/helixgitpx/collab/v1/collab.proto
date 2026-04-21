@@ -1,0 +1,47 @@
+syntax = "proto3";
+package helixgitpx.collab.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// CollabService owns real-time collaborative document state (Automerge CRDT).
+// Clients open a stream; server broadcasts ops from every connected peer.
+service CollabService {
+  rpc OpenDoc(OpenDocRequest) returns (Document);
+  rpc ApplyOps(stream DocOp) returns (stream DocOp);
+  rpc ListPresence(ListPresenceRequest) returns (ListPresenceResponse);
+  rpc CloseDoc(CloseDocRequest) returns (google.protobuf.Empty);
+}
+
+message Document {
+  string id = 1;
+  string repo_id = 2;
+  string title = 3;
+  bytes snapshot = 4;                  // Automerge binary snapshot
+  int64 vector_clock = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message OpenDocRequest {
+  string doc_id = 1;
+  string actor_id = 2;
+}
+
+message DocOp {
+  string doc_id = 1;
+  string actor_id = 2;
+  bytes change = 3;                    // Automerge change bytes
+  int64 local_seq = 4;
+  google.protobuf.Timestamp at = 5;
+}
+
+message ListPresenceRequest { string doc_id = 1; }
+message ListPresenceResponse { repeated Presence present = 1; }
+
+message Presence {
+  string actor_id = 1;
+  string display_name = 2;
+  google.protobuf.Timestamp last_seen = 3;
+}
+
+message CloseDocRequest { string doc_id = 1; string actor_id = 2; }

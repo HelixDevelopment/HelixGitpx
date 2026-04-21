@@ -1,0 +1,67 @@
+syntax = "proto3";
+package helixgitpx.conflict.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ConflictService exposes the conflict inbox + human-review flow.
+// Detection runs async via sync-orchestrator; this service is the UI surface.
+service ConflictService {
+  rpc List(ListConflictsRequest) returns (ListConflictsResponse);
+  rpc Get(GetConflictRequest) returns (Conflict);
+  rpc ProposeResolution(ProposeResolutionRequest) returns (Resolution);
+  rpc AcceptResolution(AcceptResolutionRequest) returns (Conflict);
+  rpc RejectResolution(RejectResolutionRequest) returns (Conflict);
+}
+
+enum ConflictKind {
+  CONFLICT_KIND_UNSPECIFIED = 0;
+  CONFLICT_KIND_REF_DIVERGENCE = 1;   // two upstreams have different HEADs
+  CONFLICT_KIND_LABEL_RACE = 2;
+  CONFLICT_KIND_RENAME_COLLISION = 3;
+  CONFLICT_KIND_META_DRIFT = 4;
+}
+
+enum ConflictStatus {
+  CONFLICT_STATUS_UNSPECIFIED = 0;
+  CONFLICT_STATUS_OPEN = 1;
+  CONFLICT_STATUS_PROPOSED = 2;
+  CONFLICT_STATUS_RESOLVED = 3;
+  CONFLICT_STATUS_REJECTED = 4;
+}
+
+message Conflict {
+  string id = 1;
+  string repo_id = 2;
+  ConflictKind kind = 3;
+  ConflictStatus status = 4;
+  string description = 5;
+  repeated string involved_upstreams = 6;
+  google.protobuf.Timestamp detected_at = 7;
+  google.protobuf.Timestamp resolved_at = 8;
+  Resolution proposed = 9;
+}
+
+message Resolution {
+  string id = 1;
+  string source = 2;                   // "ai" | "human"
+  string rationale = 3;
+  bytes patch = 4;                     // unified diff or Automerge change
+  google.protobuf.Timestamp proposed_at = 5;
+}
+
+message ListConflictsRequest {
+  string org_id = 1;
+  string repo_id = 2;
+  ConflictStatus status = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+message ListConflictsResponse {
+  repeated Conflict conflicts = 1;
+  string next_page_token = 2;
+}
+
+message GetConflictRequest { string id = 1; }
+message ProposeResolutionRequest { string conflict_id = 1; bool use_ai = 2; }
+message AcceptResolutionRequest { string conflict_id = 1; string resolution_id = 2; }
+message RejectResolutionRequest { string conflict_id = 1; string resolution_id = 2; string reason = 3; }

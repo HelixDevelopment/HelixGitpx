@@ -5,6 +5,12 @@ set -u
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 cd "$SCRIPT_DIR/.." || exit 1
 
+if ! command -v kubectl >/dev/null 2>&1 || ! kubectl cluster-info >/dev/null 2>&1; then
+    echo "== $(basename "$0" .sh | sed 's/verify-//;s/-spine//') spine — SKIP (no cluster reachable) =="
+    exit 0
+fi
+
+
 pass=0; fail=0
 check() {
     local n="$1"; shift

@@ -2,6 +2,12 @@
 # M4 end-to-end spine — exercises the user journey against a running cluster.
 # Most gates FAIL without cluster bring-up; that's expected.
 set -u
+
+if ! command -v kubectl >/dev/null 2>&1 || ! kubectl cluster-info >/dev/null 2>&1; then
+    echo "== M4 End-to-end Spine — SKIP (no cluster reachable) =="
+    exit 0
+fi
+
 pass=0; fail=0
 check() { local n="$1"; shift; if "$@" >/dev/null 2>&1; then printf '  [ ok ] %s\n' "$n"; pass=$((pass+1)); else printf '  [FAIL] %s\n' "$n"; fail=$((fail+1)); fi; }
 

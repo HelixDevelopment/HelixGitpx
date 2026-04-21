@@ -48,6 +48,16 @@ make upstream-push    # push main + tags to every configured upstream
 
 Individual types: `make test-unit`, `test-integration`, `test-e2e`, `test-security`, `test-stress`, `test-ddos`, `test-benchmark`.
 
+## One-shot green suite
+
+```bash
+bash scripts/verify-everything.sh
+```
+
+Runs every artifact verifier (M1-M8 artifacts, Argo paths, Helm chart lint,
+Rego syntax) plus `go vet` + `go test` across the workspace. Cluster-probe
+verifiers short-circuit cleanly when no cluster is reachable.
+
 ## Repository layout
 
 - `docs/` — specifications, integrations, manuals, media, operations, security, superpowers plans.

@@ -17,7 +17,8 @@ const { title, description } = Astro.props as Props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{title} — HelixGitpx</title>
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).toString()} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

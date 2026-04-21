@@ -1,0 +1,35 @@
+syntax = "proto3";
+package helixgitpx.policy.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// PolicyBundleService is the opa-bundle-server's RPC surface. HTTP is the
+// primary path (OPA agents pull via the `httpbundle` plugin); RPC is for
+// admin ops (list, activate, rollback).
+service PolicyBundleService {
+  rpc ListBundles(ListBundlesRequest) returns (ListBundlesResponse);
+  rpc GetActive(GetActiveRequest) returns (Bundle);
+  rpc Activate(ActivateRequest) returns (Bundle);
+  rpc Rollback(RollbackRequest) returns (Bundle);
+}
+
+message Bundle {
+  string id = 1;
+  string version = 2;                  // semver
+  string git_revision = 3;
+  string etag = 4;
+  int64 size_bytes = 5;
+  bytes sha256 = 6;
+  bool active = 7;
+  bool signed = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp activated_at = 10;
+}
+
+message ListBundlesRequest { int32 limit = 1; }
+message ListBundlesResponse { repeated Bundle bundles = 1; }
+
+message GetActiveRequest {}
+
+message ActivateRequest { string bundle_id = 1; string actor_id = 2; string reason = 3; }
+message RollbackRequest { string target_bundle_id = 1; string actor_id = 2; string reason = 3; }

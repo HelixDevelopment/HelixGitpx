@@ -1,0 +1,44 @@
+syntax = "proto3";
+package helixgitpx.gitingress.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// GitIngressService accepts git smart-HTTP operations. The HTTP side is the
+// primary surface; this RPC is for internal operations and status.
+service GitIngressService {
+  rpc ListRecentPushes(ListRecentPushesRequest) returns (ListRecentPushesResponse);
+  rpc GetRepoStats(GetRepoStatsRequest) returns (RepoStats);
+  rpc GetQuotaStatus(QuotaStatusRequest) returns (QuotaStatus);
+}
+
+message Push {
+  string id = 1;
+  string repo_id = 2;
+  string ref = 3;
+  string old_sha = 4;
+  string new_sha = 5;
+  string actor_id = 6;
+  int32 size_bytes = 7;
+  google.protobuf.Timestamp at = 8;
+}
+
+message ListRecentPushesRequest {
+  string repo_id = 1;
+  int32 limit = 2;
+}
+message ListRecentPushesResponse { repeated Push pushes = 1; }
+
+message GetRepoStatsRequest { string repo_id = 1; }
+message RepoStats {
+  int64 size_bytes = 1;
+  int32 ref_count = 2;
+  int64 last_push_unix = 3;
+}
+
+message QuotaStatusRequest { string org_id = 1; }
+message QuotaStatus {
+  int64 storage_bytes_used = 1;
+  int64 storage_bytes_limit = 2;
+  int32 pushes_this_minute = 3;
+  int32 pushes_per_minute_limit = 4;
+}

@@ -1,0 +1,54 @@
+syntax = "proto3";
+package helixgitpx.adapter.v1;
+
+// AdapterPoolService manages provider adapters (the 12 Git hosts HelixGitpx
+// federates) and exposes metadata + health per adapter.
+service AdapterPoolService {
+  rpc ListProviders(ListProvidersRequest) returns (ListProvidersResponse);
+  rpc GetProviderHealth(ProviderHealthRequest) returns (ProviderHealth);
+  rpc RotateToken(RotateTokenRequest) returns (RotateTokenResponse);
+}
+
+enum ProviderID {
+  PROVIDER_ID_UNSPECIFIED = 0;
+  PROVIDER_ID_GITHUB = 1;
+  PROVIDER_ID_GITLAB = 2;
+  PROVIDER_ID_GITEA = 3;
+  PROVIDER_ID_GITEE = 4;
+  PROVIDER_ID_BITBUCKET = 5;
+  PROVIDER_ID_GITFLIC = 6;
+  PROVIDER_ID_GITVERSE = 7;
+  PROVIDER_ID_AZURE_DEVOPS = 8;
+  PROVIDER_ID_AWS_CODECOMMIT = 9;
+  PROVIDER_ID_FORGEJO = 10;
+  PROVIDER_ID_SOURCEHUT = 11;
+  PROVIDER_ID_GENERIC = 12;
+}
+
+message Provider {
+  ProviderID id = 1;
+  string display_name = 2;
+  bool write_supported = 3;
+  bool webhook_hmac = 4;
+  int32 default_rate_limit_per_minute = 5;
+}
+
+message ProviderHealth {
+  ProviderID id = 1;
+  bool healthy = 2;
+  string detail = 3;
+  int32 last_status_code = 4;
+  int64 last_latency_ms = 5;
+}
+
+message ListProvidersRequest {}
+message ListProvidersResponse { repeated Provider providers = 1; }
+
+message ProviderHealthRequest { ProviderID id = 1; }
+
+message RotateTokenRequest {
+  ProviderID id = 1;
+  string repo_id = 2;
+  string new_token = 3;                // written to Vault, never logged
+}
+message RotateTokenResponse { bool rotated = 1; }

@@ -1,0 +1,52 @@
+syntax = "proto3";
+package helixgitpx.events.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+// LiveEventsService streams per-org, per-repo events to clients. Backed by
+// Kafka consumer groups; falls back to WebSocket or SSE when gRPC streaming
+// is unavailable.
+service LiveEventsService {
+  rpc Subscribe(SubscribeRequest) returns (stream Event);
+  rpc Resume(ResumeRequest) returns (stream Event);
+  rpc Publish(PublishRequest) returns (PublishResponse);
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_REPO_PUSHED = 1;
+  EVENT_TYPE_PR_OPENED = 2;
+  EVENT_TYPE_PR_MERGED = 3;
+  EVENT_TYPE_ISSUE_OPENED = 4;
+  EVENT_TYPE_CONFLICT_DETECTED = 5;
+  EVENT_TYPE_SYNC_COMPLETED = 6;
+  EVENT_TYPE_SYNC_FAILED = 7;
+  EVENT_TYPE_POLICY_VIOLATION = 8;
+  EVENT_TYPE_AI_DECISION = 9;
+}
+
+message Event {
+  string id = 1;
+  EventType type = 2;
+  string org_id = 3;
+  string repo_id = 4;
+  string actor_id = 5;
+  google.protobuf.Timestamp at = 6;
+  google.protobuf.Any payload = 7;
+  string resume_token = 8;
+}
+
+message SubscribeRequest {
+  string org_id = 1;
+  repeated string repo_ids = 2;
+  repeated EventType types = 3;
+}
+
+message ResumeRequest {
+  string resume_token = 1;
+  repeated string repo_ids = 2;
+}
+
+message PublishRequest { Event event = 1; }
+message PublishResponse { string event_id = 1; }

@@ -1,0 +1,61 @@
+syntax = "proto3";
+package helixgitpx.sync.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// SyncService exposes the fan-out + inbound-reconcile state managed by
+// sync-orchestrator (Temporal-backed workflows).
+service SyncService {
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  rpc GetJob(GetJobRequest) returns (SyncJob);
+  rpc RetryJob(RetryJobRequest) returns (SyncJob);
+  rpc CancelJob(CancelJobRequest) returns (google.protobuf.Empty);
+  rpc ListDLQ(ListDLQRequest) returns (ListDLQResponse);
+  rpc RequeueFromDLQ(RequeueFromDLQRequest) returns (SyncJob);
+}
+
+enum JobKind {
+  JOB_KIND_UNSPECIFIED = 0;
+  JOB_KIND_FANOUT_PUSH = 1;
+  JOB_KIND_INBOUND_RECONCILE = 2;
+  JOB_KIND_METADATA_SYNC = 3;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_QUEUED = 1;
+  JOB_STATUS_RUNNING = 2;
+  JOB_STATUS_SUCCEEDED = 3;
+  JOB_STATUS_FAILED = 4;
+  JOB_STATUS_DLQ = 5;
+}
+
+message SyncJob {
+  string id = 1;                       // Temporal workflow ID
+  string repo_id = 2;
+  JobKind kind = 3;
+  JobStatus status = 4;
+  string upstream = 5;                 // e.g. "github"
+  string ref = 6;                      // e.g. "refs/heads/main"
+  int32 attempt = 7;
+  string last_error = 8;
+  google.protobuf.Timestamp started_at = 9;
+  google.protobuf.Timestamp finished_at = 10;
+}
+
+message ListJobsRequest {
+  string repo_id = 1;
+  JobStatus status = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+message ListJobsResponse { repeated SyncJob jobs = 1; string next_page_token = 2; }
+
+message GetJobRequest { string id = 1; }
+message RetryJobRequest { string id = 1; }
+message CancelJobRequest { string id = 1; }
+
+message ListDLQRequest { string repo_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListDLQResponse { repeated SyncJob jobs = 1; string next_page_token = 2; }
+message RequeueFromDLQRequest { string id = 1; }
