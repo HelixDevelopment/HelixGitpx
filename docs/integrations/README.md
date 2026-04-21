@@ -18,6 +18,10 @@ the integration is scheduled.
 - [`helixagent-plinius-w0-spike.md`](./helixagent-plinius-w0-spike.md)
   — the Week 0 spike specification. This is what must land before
   the plan's Phase 1 can start.
+- [`helixagent-plinius-policy-review.md`](./helixagent-plinius-policy-review.md)
+  — **authoritative verdict** per module: 7 KEEP, 6 KEEP-GATED,
+  7 DROP, 1 DROP-and-don't-build. Supersedes the indiscriminate
+  "integrate all 20" framing in the original plan.
 
 ## Status
 

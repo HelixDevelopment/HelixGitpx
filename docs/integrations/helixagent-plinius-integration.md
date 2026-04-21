@@ -4,9 +4,12 @@
 > **Received:** 2026-04-20.
 >
 > ⚠️ **READ FIRST:**
-> 1. [`helixagent-plinius-verification.md`](./helixagent-plinius-verification.md)
+> 1. [`helixagent-plinius-policy-review.md`](./helixagent-plinius-policy-review.md)
+>    — **AUTHORITATIVE VERDICT** per module (KEEP / KEEP-GATED / DROP).
+>    Supersedes the "integrate all 20" framing below.
+> 2. [`helixagent-plinius-verification.md`](./helixagent-plinius-verification.md)
 >    — independent fact-check of every claim below.
-> 2. [`helixagent-plinius-w0-spike.md`](./helixagent-plinius-w0-spike.md)
+> 3. [`helixagent-plinius-w0-spike.md`](./helixagent-plinius-w0-spike.md)
 >    — the Week 0 spike specification that must land before Phase 1.
 >
 > Key findings: the **Go port layer does not exist yet** (no
