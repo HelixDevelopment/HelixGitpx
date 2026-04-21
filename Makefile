@@ -112,6 +112,17 @@ test-all: test-unit test-integration test-e2e test-security test-stress test-ddo
 coverage-audit: ## Per-package coverage audit; fails below threshold
 	bash tools/coverage-audit/audit.sh
 
+.PHONY: ci-local
+ci-local: ## Run every check that the ci-verifiers workflow runs (green-suite)
+	bash scripts/verify-everything.sh
+
+.PHONY: verify-proto-gen verify-secrets
+verify-proto-gen: ## Detect drift between proto/ and committed gen/
+	bash scripts/verify-proto-gen.sh
+
+verify-secrets: ## Scan the repo for committed secrets (gitleaks)
+	bash scripts/verify-secrets.sh
+
 # ---------------------------------------------------------------------------
 # Upstream federation (Constitution Article IV §2).
 # ---------------------------------------------------------------------------

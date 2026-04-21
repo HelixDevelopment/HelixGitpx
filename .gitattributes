@@ -13,3 +13,13 @@ impl/helixgitpx-clients/iosApp/Gen/** linguist-generated=true
 *.jpg binary
 *.ico binary
 *.pdf binary
+*.zip binary
+*.7z binary
+*.epub binary
+*.docx binary
+*.mobi binary
+
+# Docs archives are generated — suppress diff noise
+docs/specifications/main/main_implementation_material/HelixGitpx.zip linguist-generated=true
+docs/specifications/main/main_implementation_material/HelixGitpx.7z linguist-generated=true
+docs/manuals/dist/** linguist-generated=true
