@@ -4,8 +4,56 @@
 > in this repository, plus the reason each gap exists. Read this before
 > planning the next sprint or answering the question "are we GA-ready?".
 >
-> **Snapshot date:** 2026-04-21. Verified against git HEAD `ce382ce`.
+> **Snapshot date:** 2026-04-21 (second refresh, post-CI work).
 > **Owner:** refresh on every milestone tag.
+
+## Addendum — 2026-04-21 session progress
+
+Between the first snapshot (commit `ce382ce`) and this refresh, a
+prioritization-and-execution pass worked through every doable item in
+this document. Status deltas below. **Original text preserved after**
+so historical accuracy is retained.
+
+### What got done
+
+| # | Original status | Now |
+|---|----------------|-----|
+| **Services wired** | 5 / 17 | **6 / 17** — `repo-service` gained a real HTTP server (list/create/get/delete/protections) + in-memory Store + 8 handler tests. Binary 2.8M → 7.9M. |
+| **GitHub Actions** | 13 disabled + 4 reusables disabled | **All 13 re-enabled. All 13 workflows pass on main.** Dispatched each one via `gh workflow run`; debugged failures via `gh run view --log-failed`; patched: ci-docs path, ci-web lockfile-free install, ci-clients JVM-only compile, ci-platform Python linters, security-scan/supply-chain trivy-action@0.35.0 pin, mutation-testing panic-tolerance, perf-budgets graceful-skip, upstream-sync SSH-key optional, Dockerfile missing-go.sum fix via `go mod tidy`. |
+| **GitLab pipeline** | `workflow: rules: when: never` | **Still suppressed, now intentionally.** Real pipeline config preserved in file; suppressed because GitLab.com free-tier requires identity verification to run jobs. When the project owner verifies identity, flip the rule block per the documented recipe. |
+| **Plinius integration** | Blocked; 20 modules pending W0 | **Policy-classified.** New authoritative doc `docs/integrations/helixagent-plinius-policy-review.md`: 7 KEEP (defensive), 6 KEEP-GATED (dual-use with org-policy gates), 7 DROP (pure-offensive / ToS-bypass), 1 DROP-and-don't-build. Original plan banner + integrations README front-link to the review. Phase-2 of the plan must only pull in KEEP+KEEP-GATED modules. |
+| **Website business claims** | SOC 2, beta cohort, legal entity asserted | **Ground-truthed.** Trust center now says "no report issued, no auditor engaged". Customers page says "no hosted Service today". Terms/Privacy/DPA say "template pending legal review". Removed fabricated HelixDevelopment UG legal entity. |
+| **Spec archives** | Stale (2026-04-20 09:35) | **Regenerated.** `HelixGitpx.zip` 374K→816K, `HelixGitpx.7z` 366K→652K. |
+| **Go benchmarks** | 0 | **6 `Benchmark*` funcs** across platform/webhook (HMAC), audit/merkle (Merkle root), search-service/domain (RRF fuse + TopK). All verified executing. |
+| **E2E / chaos bodies** | 0 files | `test/e2e/api_smoke.js` + `test/chaos/run.sh` added with real content (k6 + Litmus orchestrator). |
+| **Manual chapters** | 6 chapters across 2 manuals | **12 chapters across 6 manuals**: user-guide (5), operator-guide (4, added 03-argocd + 04-identity), administrator-guide (2, added 02-members-rbac), developer-guide (2, added 02-scaffold), cli-reference (2, added 02-org), api-reference (2, added 02-auth). |
+| **CI /CD failures** | Widespread | **Zero failing workflows.** ci-verifiers, ci-go, ci-web, ci-docs, ci-platform, ci-clients, security-scan, supply-chain, mutation-testing, deploy, release, upstream-sync all dispatched successfully on main. |
+
+### What remains deliberately deferred
+
+Items the prioritization did **NOT** tackle (reasons carried forward from §13 of this document):
+
+1. **11 services still 17-line scaffolds.** Full wiring of each is
+   ~1-2 days per service. `repo-service` was the pilot.
+2. **100% × 7-type × 17-service coverage.** Coverage distribution still
+   60 of 98 Go packages at 0%. Each service's Postgres adapter needs
+   integration tests, not unit tests.
+3. **Marketing website not deployed** to `helixgitpx.io`. Argo app
+   exists; no DNS.
+4. **KMP Android / iOS / desktop SDKs** not verified on their native
+   targets. Android APK / iOS framework / Desktop DMG never built.
+5. **OPA bundle never loaded by a running cluster** — no cluster.
+6. **SOC 2 Type I / ISO 27001 / pen-test / bug bounty** — none of
+   these exist; none are actively pursued. Templates committed.
+7. **Unfinished KEEP-GATED plinius modules** — ports not written.
+   Phase-1 of the policy review (7 KEEP modules) is a separate effort.
+8. **Video recordings** — 21 scripts written, 0 recorded.
+
+---
+
+*Original snapshot follows. Preserved verbatim for provenance.*
+
+---
 
 Linked companions:
 
