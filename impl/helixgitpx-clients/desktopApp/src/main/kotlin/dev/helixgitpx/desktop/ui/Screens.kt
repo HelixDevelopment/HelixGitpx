@@ -1,4 +1,4 @@
-package dev.helixgitpx.shared.ui
+package dev.helixgitpx.desktop.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

@@ -1,4 +1,4 @@
-package dev.helixgitpx.shared.ui
+package dev.helixgitpx.android.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
