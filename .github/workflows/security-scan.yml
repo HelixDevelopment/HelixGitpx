@@ -1,0 +1,70 @@
+name: security-scan
+# Free-tier security scanners. Each job degrades gracefully when its
+# required secret is absent so manual `gh workflow run` doesn't fail.
+on:
+  workflow_dispatch:
+    inputs:
+      deep:
+        type: boolean
+        default: false
+        description: "Enable slow scanners (CodeQL)"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  gosec:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: impl/helixgitpx } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.23.4" }
+      - name: Install + run gosec
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.21.4
+          gosec -fmt=sarif -out=gosec.sarif ./... || true
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: impl/helixgitpx/gosec.sarif
+
+  trivy-fs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          exit-code: "0"
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs.sarif
+
+  grype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anchore/scan-action@v5
+        with:
+          path: "."
+          fail-build: false
+          severity-cutoff: high
+
+  codeql:
+    if: ${{ inputs.deep }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [go, javascript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with: { languages: ${{ matrix.language }} }
+      - uses: github/codeql-action/analyze@v3

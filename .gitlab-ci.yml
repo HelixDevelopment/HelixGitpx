@@ -1,16 +1,69 @@
-# GitLab pipelines are DISABLED for this project.
-#
-# The `workflow:rules:when:never` clause below tells GitLab to refuse
-# to create any pipeline — on push, on merge request, on schedule, on
-# trigger, on API, on anything. No jobs run. No UI "Run pipeline" button
-# will start anything.
-#
-# Re-enable by removing or editing this file and committing.
-# Operator decision (2026-04-21). See .github/workflows/README.md for the
-# parallel GitHub Actions disable.
+default:
+  image: debian:stable-slim
+  tags: []
+  timeout: 30 minutes
 
 workflow:
+  name: 'Pipeline for $CI_COMMIT_REF_NAME'
   rules:
-    - when: never
+    # manual-only: pipelines are created by GitLab-UI "Run pipeline"
+    # or by the REST API. No auto-run on push/MR/schedule. This mirrors
+    # the GitHub Actions workflow_dispatch-only mandate from the
+    # Constitution Article CI.
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "api"
+    - if: $CI_PIPELINE_SOURCE == "trigger"
 
-stages: []
+stages:
+  - lint
+  - test
+  - build
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq --no-install-recommends git python3 python3-yaml curl ca-certificates >/dev/null
+
+verify-artifacts:
+  stage: lint
+  script:
+    - bash scripts/verify-m1-artifacts.sh
+    - bash scripts/verify-m2-artifacts.sh
+    - bash scripts/verify-argo-paths.sh
+    - bash scripts/verify-helm-charts.sh
+    - bash scripts/verify-rego.sh
+
+go-test:
+  stage: test
+  image: golang:1.23.4
+  script:
+    - cd impl/helixgitpx
+    - |
+      for mod in $(find . -name go.mod | xargs -n1 dirname); do
+        echo "== $mod =="
+        (cd "$mod" && go vet ./... && go test -race -count=1 ./...)
+      done
+
+web-build:
+  stage: build
+  image: node:20
+  script:
+    - cd impl/helixgitpx-web
+    - npm install --no-audit --no-fund --legacy-peer-deps
+    - npx nx build web
+    - npx nx test web --watchAll=false
+  artifacts:
+    paths:
+      - impl/helixgitpx-web/dist/
+    expire_in: 7 days
+    when: always
+
+docs-site:
+  stage: build
+  image: node:20
+  script:
+    - cd impl/helixgitpx-docs-site
+    - npm install --no-audit --no-fund --legacy-peer-deps
+    - npx docusaurus build
+  artifacts:
+    paths:
+      - impl/helixgitpx-docs-site/build/
+    expire_in: 7 days

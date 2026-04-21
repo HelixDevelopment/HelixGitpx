@@ -1,0 +1,110 @@
+name: supply-chain
+# Per-service container build + SBOM (Syft) + Cosign keyless sign + SLSA
+# provenance + Trivy scan. Degrades gracefully when prerequisites missing.
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated service names or `all`'
+        required: true
+        default: 'hello'
+      registry:
+        description: 'Registry prefix (default = ghcr.io/<owner>)'
+        required: false
+        default: ''
+      tag:
+        description: 'Image tag'
+        required: true
+        default: 'ci'
+      push:
+        description: 'Push the image (needs registry access)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  enumerate:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.list.outputs.services }}
+      registry: ${{ steps.list.outputs.registry }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.inputs.services }}" = "all" ]; then
+            services=$(ls impl/helixgitpx/services | jq -R -s -c 'split("\n") | map(select(length>0))')
+          else
+            services=$(echo "${{ github.event.inputs.services }}" | tr ',' '\n' | jq -R -s -c 'split("\n") | map(select(length>0))')
+          fi
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+          reg="${{ github.event.inputs.registry }}"
+          if [ -z "$reg" ]; then
+            reg="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          fi
+          echo "registry=$reg" >> "$GITHUB_OUTPUT"
+
+  build-scan:
+    needs: enumerate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.enumerate.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.23.4' }
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to registry
+        if: ${{ github.event.inputs.push == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: impl/helixgitpx
+          file: impl/helixgitpx/services/${{ matrix.service }}/deploy/Dockerfile
+          push: ${{ github.event.inputs.push == 'true' }}
+          load: ${{ github.event.inputs.push != 'true' }}
+          tags: ${{ needs.enumerate.outputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+
+      - name: SBOM CycloneDX
+        uses: anchore/sbom-action@v0
+        continue-on-error: true
+        with:
+          image: ${{ needs.enumerate.outputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+          format: cyclonedx-json
+          artifact-name: sbom-${{ matrix.service }}.cdx.json
+
+      - name: Trivy image scan (non-blocking)
+        uses: aquasecurity/trivy-action@0.28.0
+        continue-on-error: true
+        with:
+          image-ref: ${{ needs.enumerate.outputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}
+          severity: HIGH,CRITICAL
+          exit-code: '0'
+          ignore-unfixed: true
+
+      - uses: sigstore/cosign-installer@v3
+        if: ${{ github.event.inputs.push == 'true' }}
+
+      - name: Cosign sign (keyless, only on push)
+        if: ${{ github.event.inputs.push == 'true' }}
+        env:
+          COSIGN_EXPERIMENTAL: '1'
+        run: |
+          cosign sign --yes \
+            "${{ needs.enumerate.outputs.registry }}/${{ matrix.service }}:${{ github.event.inputs.tag }}"

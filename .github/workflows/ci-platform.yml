@@ -1,0 +1,31 @@
+name: ci-platform
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-platform-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python3 -m pip install --user pyyaml
+
+      - name: Argo Application path check (53/53 must resolve)
+        run: bash scripts/verify-argo-paths.sh
+
+      - name: Helm chart sanity (no helm CLI required)
+        run: bash scripts/verify-helm-charts.sh
+
+      - name: Rego syntax
+        run: bash scripts/verify-rego.sh
+
+      - name: M1 artifact matrix
+        run: bash scripts/verify-m1-artifacts.sh
+
+      - name: M2 artifact matrix
+        run: bash scripts/verify-m2-artifacts.sh

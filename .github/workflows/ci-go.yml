@@ -1,0 +1,68 @@
+name: ci-go
+on:
+  workflow_dispatch:
+    inputs:
+      run-fuzz:
+        description: "Run fuzz targets briefly"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-go-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vet-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+
+      - name: Vet every submodule
+        env:
+          GOTOOLCHAIN: go1.23.4
+        run: |
+          set -euo pipefail
+          cd impl/helixgitpx
+          for mod in $(find . -name go.mod | xargs -n1 dirname); do
+            echo "::group::vet $mod"
+            (cd "$mod" && go vet ./...)
+            echo "::endgroup::"
+          done
+
+      - name: Test every submodule (race + shuffle + cover)
+        env:
+          GOTOOLCHAIN: go1.23.4
+        run: |
+          set -euo pipefail
+          cd impl/helixgitpx
+          for mod in $(find . -name go.mod | xargs -n1 dirname); do
+            echo "::group::test $mod"
+            (cd "$mod" && go test -race -shuffle=on -count=1 ./...)
+            echo "::endgroup::"
+          done
+
+      - name: Build every submodule
+        env:
+          GOTOOLCHAIN: go1.23.4
+        run: |
+          set -euo pipefail
+          cd impl/helixgitpx
+          for mod in $(find . -name go.mod | xargs -n1 dirname); do
+            echo "::group::build $mod"
+            (cd "$mod" && go build ./...)
+            echo "::endgroup::"
+          done
+
+      - name: Fuzz targets (brief)
+        if: ${{ inputs.run-fuzz }}
+        env:
+          GOTOOLCHAIN: go1.23.4
+        run: |
+          set -euo pipefail
+          (cd impl/helixgitpx/platform/webhook && go test -run='^$' -fuzz=FuzzVerifyHMAC -fuzztime=10s)
+          (cd impl/helixgitpx/services/webhook-gateway/internal/canonical && \
+             go test -run='^$' -fuzz=FuzzCanonicalizeGitHub -fuzztime=10s)

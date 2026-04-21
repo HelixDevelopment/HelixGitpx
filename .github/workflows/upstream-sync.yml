@@ -1,0 +1,58 @@
+name: upstream-sync
+# Push main + tags to every configured upstream. Requires per-target SSH
+# deploy keys as repo secrets (UPSTREAM_*_SSH_KEY). Degrades gracefully
+# when secrets are missing — per-target failures are reported but do not
+# cascade-fail the run.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to push'
+        required: true
+        default: 'main'
+
+jobs:
+  push-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install SSH keys (one per upstream; missing ones are skipped)
+        env:
+          K_GITHUB:   ${{ secrets.UPSTREAM_GITHUB_SSH_KEY }}
+          K_GITLAB:   ${{ secrets.UPSTREAM_GITLAB_SSH_KEY }}
+          K_GITFLIC:  ${{ secrets.UPSTREAM_GITFLIC_SSH_KEY }}
+          K_GITVERSE: ${{ secrets.UPSTREAM_GITVERSE_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          [ -n "${K_GITHUB:-}" ]   && printf '%s\n' "$K_GITHUB"   > ~/.ssh/id_github   && chmod 600 ~/.ssh/id_github
+          [ -n "${K_GITLAB:-}" ]   && printf '%s\n' "$K_GITLAB"   > ~/.ssh/id_gitlab   && chmod 600 ~/.ssh/id_gitlab
+          [ -n "${K_GITFLIC:-}" ]  && printf '%s\n' "$K_GITFLIC"  > ~/.ssh/id_gitflic  && chmod 600 ~/.ssh/id_gitflic
+          [ -n "${K_GITVERSE:-}" ] && printf '%s\n' "$K_GITVERSE" > ~/.ssh/id_gitverse && chmod 600 ~/.ssh/id_gitverse
+
+          cat >~/.ssh/config <<'EOT'
+          Host github.com
+            IdentityFile ~/.ssh/id_github
+            StrictHostKeyChecking accept-new
+          Host gitlab.com
+            IdentityFile ~/.ssh/id_gitlab
+            StrictHostKeyChecking accept-new
+          Host gitflic.ru
+            IdentityFile ~/.ssh/id_gitflic
+            StrictHostKeyChecking accept-new
+          Host gitverse.ru
+            IdentityFile ~/.ssh/id_gitverse
+            StrictHostKeyChecking accept-new
+          EOT
+          chmod 600 ~/.ssh/config
+
+          ls -l ~/.ssh | grep -E 'id_' || echo "No upstream SSH keys installed — script will report per-target failures."
+
+      - name: Push to all upstreams (per-target failure non-fatal)
+        env:
+          BRANCH: ${{ github.event.inputs.branch }}
+        run: bash scripts/push-to-all-upstreams.sh || true

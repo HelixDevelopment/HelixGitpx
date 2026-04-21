@@ -1,0 +1,44 @@
+name: perf-budgets
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'API base URL'
+        required: true
+        default: 'https://staging.helixgitpx.io'
+      scenario:
+        description: 'Scenario (baseline, git, ws, ai, all)'
+        required: true
+        default: 'all'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -y
+          sudo apt-get install -y k6
+
+      - name: Run scenarios (allow-failure; target may be unreachable)
+        working-directory: tools/perf
+        env:
+          HELIXGITPX_API: ${{ github.event.inputs.target }}
+          HELIXGITPX_TOKEN: ${{ secrets.HELIXGITPX_PERF_TOKEN }}
+        run: |
+          make ${{ github.event.inputs.scenario }} || true
+
+      - name: Enforce budgets (skip gracefully when no k6 output)
+        run: |
+          if ls /tmp/k6-out-*.json >/dev/null 2>&1; then
+            python3 tools/perf/check_budgets.py /tmp/k6-out-*.json tools/perf/budgets.json
+          else
+            echo "No k6 output to evaluate — target likely unreachable from runner."
+          fi
