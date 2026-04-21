@@ -58,8 +58,11 @@ func TestList_RequiresRepoID(t *testing.T) {
 func TestListByRepoAndDelete(t *testing.T) {
 	srv := setup(t)
 	create := func(provider, url string) string {
-		resp, _ := http.Post(srv.URL+"/v1/upstreams", "application/json",
+		resp, err := http.Post(srv.URL+"/v1/upstreams", "application/json",
 			strings.NewReader(`{"repo_id":"r-1","provider":"`+provider+`","url":"`+url+`","direction":"write"}`))
+		if err != nil {
+			t.Fatal(err)
+		}
 		defer resp.Body.Close()
 		var out struct {
 			ID string `json:"id"`
@@ -71,7 +74,10 @@ func TestListByRepoAndDelete(t *testing.T) {
 	_ = create("gitlab", "https://gitlab.com/o/r.git")
 
 	// list
-	resp, _ := http.Get(srv.URL + "/v1/upstreams?repo_id=r-1")
+	resp, err := http.Get(srv.URL + "/v1/upstreams?repo_id=r-1")
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer resp.Body.Close()
 	var body struct {
 		Bindings []map[string]any `json:"bindings"`
@@ -83,7 +89,10 @@ func TestListByRepoAndDelete(t *testing.T) {
 
 	// delete
 	req, _ := http.NewRequest(http.MethodDelete, srv.URL+"/v1/upstreams/"+id1, nil)
-	resp2, _ := http.DefaultClient.Do(req)
+	resp2, err2 := http.DefaultClient.Do(req)
+	if err2 != nil {
+		t.Fatal(err2)
+	}
 	defer resp2.Body.Close()
 	if resp2.StatusCode != 204 {
 		t.Fatalf("want 204 got %d", resp2.StatusCode)

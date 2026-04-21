@@ -97,7 +97,10 @@ func TestGitLab_ChecksToken(t *testing.T) {
 
 	req2, _ := http.NewRequest(http.MethodPost, srv.URL+"/v1/webhooks/gitlab", strings.NewReader(`{}`))
 	req2.Header.Set("X-Gitlab-Token", "wrong")
-	resp2, _ := http.DefaultClient.Do(req2)
+	resp2, err2 := http.DefaultClient.Do(req2)
+	if err2 != nil {
+		t.Fatal(err2)
+	}
 	defer resp2.Body.Close()
 	if resp2.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("want 401 got %d", resp2.StatusCode)
