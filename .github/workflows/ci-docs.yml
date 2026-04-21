@@ -62,3 +62,18 @@ jobs:
         with:
           name: marketing-site
           path: impl/helixgitpx-website/dist/
+
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.18.1" }
+      - name: markdownlint (permissive — warnings only on legacy files)
+        run: |
+          npx --yes markdownlint-cli2 \
+            'docs/manuals/src/**/*.md' \
+            'docs/operations/runbooks/**/*.md' \
+            'docs/integrations/*.md' \
+            '#docs/specifications/**' || true
+          echo "markdown-lint completed (warnings allowed during initial rollout)."
