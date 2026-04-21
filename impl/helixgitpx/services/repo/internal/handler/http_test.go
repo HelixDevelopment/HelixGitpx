@@ -91,7 +91,8 @@ func TestCreateAndGet(t *testing.T) {
 		t.Fatalf("unexpected %+v", r)
 	}
 
-	get, _ := http.Get(srv.URL + "/v1/repos/" + r.ID)
+	get, errGet := http.Get(srv.URL + "/v1/repos/" + r.ID)
+	if errGet != nil { t.Fatal(errGet) }
 	defer get.Body.Close()
 	if get.StatusCode != http.StatusOK {
 		t.Fatalf("get: want 200 got %d", get.StatusCode)
@@ -171,7 +172,8 @@ func TestAddProtection(t *testing.T) {
 		t.Fatalf("want 201 got %d", resp.StatusCode)
 	}
 
-	list, _ := http.Get(srv.URL + "/v1/repos/" + r.ID + "/protections")
+	list, errList := http.Get(srv.URL + "/v1/repos/" + r.ID + "/protections")
+	if errList != nil { t.Fatal(errList) }
 	defer list.Body.Close()
 	var body struct {
 		Protections []domain.Protection
