@@ -27,7 +27,7 @@ so historical accuracy is retained.
 | **Go benchmarks** | 0 | **6 `Benchmark*` funcs** across platform/webhook (HMAC), audit/merkle (Merkle root), search-service/domain (RRF fuse + TopK). All verified executing. |
 | **E2E / chaos bodies** | 0 files | `test/e2e/api_smoke.js` + `test/chaos/run.sh` added with real content (k6 + Litmus orchestrator). |
 | **Manual chapters** | 6 chapters across 2 manuals | **12 chapters across 6 manuals**: user-guide (5), operator-guide (4, added 03-argocd + 04-identity), administrator-guide (2, added 02-members-rbac), developer-guide (2, added 02-scaffold), cli-reference (2, added 02-org), api-reference (2, added 02-auth). |
-| **CI /CD failures** | Widespread | **Zero failing workflows.** ci-verifiers, ci-go, ci-web, ci-docs, ci-platform, ci-clients, security-scan, supply-chain, mutation-testing, deploy, release, upstream-sync all dispatched successfully on main. |
+| **CI / CD failures** | Widespread | **All 13 GitHub workflows have at least one `success` run on main** — verified via `gh run list --json conclusion`: ci-verifiers, ci-go, ci-web, ci-docs, ci-platform, ci-clients, security-scan, supply-chain, mutation-testing, deploy, release, perf-budgets, upstream-sync. GitLab pipeline suppressed intentionally (identity verification pending on GitLab.com — re-enable recipe committed in `.gitlab-ci.yml`). |
 
 ### What remains deliberately deferred
 
