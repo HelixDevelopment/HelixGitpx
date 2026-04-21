@@ -1,0 +1,16 @@
+# GitLab pipelines are DISABLED for this project.
+#
+# The `workflow:rules:when:never` clause below tells GitLab to refuse
+# to create any pipeline — on push, on merge request, on schedule, on
+# trigger, on API, on anything. No jobs run. No UI "Run pipeline" button
+# will start anything.
+#
+# Re-enable by removing or editing this file and committing.
+# Operator decision (2026-04-21). See .github/workflows/README.md for the
+# parallel GitHub Actions disable.
+
+workflow:
+  rules:
+    - when: never
+
+stages: []
