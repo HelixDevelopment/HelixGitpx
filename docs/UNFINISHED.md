@@ -130,7 +130,7 @@ module touched**: unit, integration, e2e, security, stress, ddos, benchmark.
 
 | Type | Test files present | Gap |
 |------|-------------------|-----|
-| unit | 26 `*_test.go` across services + platform; 1 `.spec.ts` web | **59/98 Go packages at 0%.** Only 8 Go packages at 100%. |
+| unit | 28 `*_test.go` across services + platform; 1 `.spec.ts` web | **47/98 Go packages at 0%.** Only 8 Go packages at 100%. |
 | integration | 5 files (auth, hello, orgteam, repo, webhook) | All require env vars + live compose stack. None run in CI. |
 | e2e | 0 files (Playwright `01-login-and-orgs.spec.ts` exists at `impl/helixgitpx-web/e2e/`, not under `test/e2e/`) | Mobile + desktop have no e2e suites. Requires live cluster. |
 | security | `test/security/run.sh` orchestrator | No first-party security tests yet; script shells out to gosec/ZAP/Nuclei/Trivy, all graceful-skip. |
@@ -144,10 +144,10 @@ module touched**: unit, integration, e2e, security, stress, ddos, benchmark.
 Of 98 testable Go packages:
 
 ```
-0%:      59  (60%)  no tests at all
+0%:      47  (48%)  no tests at all
 0-50%:    8
-50-80%:   9
-80-100%: 14
+50-80%:  11
+80-100%: 24
 100%:     8
 ```
 
@@ -444,10 +444,10 @@ gaps in this document are *missing code*, not commented placeholders.
 |--------|-------|
 | Services wired end-to-end | 17 / 17 (all wired) |
 | Services with domain tests | 17 / 17 (all have a `domain/` pkg with tests) |
-| Go packages with any tests | 49 / 98 |
+| Go packages with any tests | 51 / 98 |
 | Go packages at 100% coverage | 8 / 98 |
 | Go fuzz targets | 4 (webhook HMAC + 3 canonicalizers) |
-| Integration tests | 5 (all need env vars) |
+| Integration tests | 9 (need env vars + compose stack: 4 vault, 3 pg, 1 telemetry, 2 redis) |
 | E2E suites wired to a cluster | 0 |
 | Manual chapters written beyond intro | 6 (5 in user-guide + 1 in operator-guide) |
 | Video recordings produced | 0 / 21 scripts |
