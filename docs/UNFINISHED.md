@@ -444,7 +444,7 @@ gaps in this document are *missing code*, not commented placeholders.
 |--------|-------|
 | Services wired end-to-end | 17 / 17 (all wired) |
 | Services with domain tests | 17 / 17 (all have a `domain/` pkg with tests) |
-| Go packages with any tests | 39 / 98 |
+| Go packages with any tests | 46 / 98 |
 | Go packages at 100% coverage | 8 / 98 |
 | Go fuzz targets | 4 (webhook HMAC + 3 canonicalizers) |
 | Integration tests | 5 (all need env vars) |
