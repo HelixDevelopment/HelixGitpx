@@ -198,7 +198,7 @@ func TestAddProtection_RejectsNegativeReviewers(t *testing.T) {
 	}
 }
 
-func TestHealthz(t *testing.T) {
+func TestHealthz_ReturnsStatusOK(t *testing.T) {
 	srv, _ := setup(t)
 	resp, err := http.Get(srv.URL + "/healthz")
 	if err != nil {
@@ -206,6 +206,18 @@ func TestHealthz(t *testing.T) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		t.Fatal("healthz must be 200")
+		t.Fatalf("want 200 got %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("want application/json content-type, got %q", ct)
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Status != "ok" {
+		t.Fatalf("want status=ok got %q", body.Status)
 	}
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -107,13 +108,27 @@ func TestGetOne(t *testing.T) {
 	}
 }
 
-func TestHealthz(t *testing.T) {
+func TestHealthz_ReturnsStatusOK(t *testing.T) {
 	srv, _, _ := setup(t)
 	defer srv.Close()
 	resp, err := http.Get(srv.URL + "/healthz")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		t.Fatal("healthz must be 200")
+		t.Fatalf("want 200 got %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("want application/json content-type, got %q", ct)
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Status != "ok" {
+		t.Fatalf("want status=ok got %q", body.Status)
 	}
 }

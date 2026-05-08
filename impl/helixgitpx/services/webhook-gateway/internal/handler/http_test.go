@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -124,5 +125,29 @@ func TestGitea_AcceptsValidSignature(t *testing.T) {
 	snapshot := rec.Snapshot()
 	if len(snapshot) != 1 || snapshot[0].Provider != "gitea" {
 		t.Fatalf("recorded wrong event: %+v", snapshot)
+	}
+}
+
+func TestHealthz_ReturnsStatusOK(t *testing.T) {
+	srv, _ := setup(t)
+	resp, err := http.Get(srv.URL + "/healthz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200 got %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("want application/json content-type, got %q", ct)
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Status != "ok" {
+		t.Fatalf("want status=ok got %q", body.Status)
 	}
 }
