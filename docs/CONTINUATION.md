@@ -8,7 +8,7 @@
 > `CLAUDE.md` and `AGENTS.md`. Any agent continuing work MUST read this file
 > first and update it before stopping.
 >
-> **Last updated:** 2026-05-08 (session 8 — anti-bluff platform library improvements, infrastructure setup, redis/spire tests).
+> **Last updated:** 2026-05-08 (session 9 — comprehensive anti-bluff audit of all 97 test files, pg/billing/ai-service improvements).
 
 ---
 
@@ -25,7 +25,22 @@
 
 ## Current Session State
 
-### Session 2026-05-08 #8 (this session)
+### Session 2026-05-08 #9 (this session)
+
+||| Item | Status ||
+|||------|--------||
+||| Comprehensive anti-bluff audit of all 97 test files | Done — 85 genuine, 12 bluff/adjacent identified ||
+||| Fixed pg_test.go: +5 tests (real Postgres Open/Ping/SELECT, Probe nil, unreachable host, Options applied) | Done — all pass ||
+||| Fixed billing stripe_test.go: rewritten with behavioral tests (input propagation, all plans, empty inputs, interface compliance) | Done — all pass ||
+||| Fixed billing usecases_test.go: +5 tests (spy provider verifies correct method/args, error propagation for both UpgradePlan and CancelPlan) | Done — all pass ||
+||| Fixed ai-service usecases_test.go: rewritten with all 4 use cases, model name verification, prompt format verification, error propagation for all 4 methods | Done — 8 tests, all pass ||
+||| Cleaned up migrate_test.go to remove duplication with improved pg_test.go | Done ||
+||| Verified anti-bluff (CONST-035) in all governance docs + Containers submodule | Done — already present ||
+||| Full test suite green (18 platform + 60+ service packages) | Done ||
+||| no_suspend_calls_challenge PASS | Done ||
+||| Updated CONTINUATION.md and UNFINISHED.md | Done ||
+
+### Session 2026-05-08 #8 (previous)
 
 ||| Item | Status ||
 |||------|--------||
@@ -138,6 +153,9 @@
 || 2026-05-08 #3 | Full anti-bluff audit, healthz Content-Type fix across 7 services, 6 healthz tests upgraded |
 || 2026-05-08 #5 | Wire 7 remaining scaffolded services (all 17/17 wired), fix collab+live-events test bugs |
 || 2026-05-08 #6 | Anti-bluff audit: improved 8 handler test files, +30 tests verifying error bodies, state transitions, response content |
+| 2026-05-08 #7 | Anti-bluff rounds 1-3: 14 handler + 14 app_test.go improved, Containers submodule, Vault/compose, platform integration tests |
+| 2026-05-08 #8 | Redis + spire platform tests improved, full suite green against live infrastructure |
+| 2026-05-08 #9 | Comprehensive audit of all 97 test files, pg/billing/ai-service anti-bluff improvements |
 
 ---
 
@@ -155,7 +173,7 @@
 || Integration tests | 9 (need env vars + compose stack: 4 vault, 3 pg, 1 telemetry, 2 redis) |
 || E2E suites wired to cluster | 0 |
 || Constitution-mandated test types with real tests | 3 / 7 (unit, integration runner, security runner shell) |
-|| **Bluff tests identified and fixed** | **18 bluff tests fixed + 14 app tests upgraded + 12 platform tests improved** (all handler + all app + all platform packages now verify real behavior) |
+|| **Bluff tests identified and fixed** | **18 bluff tests fixed + 14 app tests upgraded + 17 platform/billing/ai tests improved** (all handler + all app + all platform + billing + ai-service now verify real behavior) |
 || **Remaining known minimal tests** | 7 adapter-pool stub tests (SKIP-OK: #HGX-M4) — all platform packages now have real integration tests when infra available |
 || GitHub Actions workflows enabled | 13 / 13 (all passing on main) |
 || GitLab pipeline | Suppressed (identity verification pending) |
@@ -289,6 +307,12 @@ that connects to live infrastructure when available, plus edge-case unit tests.
 | `platform/telemetry/telemetry_test.go` | +1 | Real OTLP collector connection |
 | `platform/redis/redis_test.go` | +5 | Real Redis Open/Ping/Set/Get, Probe nil client, invalid addr, Key no-namespace, Probe real client |
 | `platform/spire/spire_test.go` | +4 | Empty socket path noop, Source returns nil for noop, Close nil-safe, Source nil receiver |
+
+|| `platform/pg/pg_test.go` | +5 | Real Postgres Open/Ping/SELECT, Probe nil, unreachable host ErrUnavailable, Options applied (MaxConns/MinConns/Timeout) ||
+|| `platform/pg/migrate_test.go` | cleaned | Removed duplication with improved pg_test.go, kept Migrate-specific tests ||
+|| `billing-service/provider/stripe_test.go` | rewritten | Input propagation, all plan names, empty inputs, interface compliance (replaced tautological stub echo) ||
+|| `billing-service/usecase/usecases_test.go` | +5 | Spy provider verifies correct method/subID/plan, error propagation for UpgradePlan and CancelPlan ||
+|| `ai-service/usecase/usecases_test.go` | rewritten | All 4 use cases: model name verification, prompt format, error propagation for each method ||
 
 ### Remaining minimal tests (ALL RESOLVED)
 
