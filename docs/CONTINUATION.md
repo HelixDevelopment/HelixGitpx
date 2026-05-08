@@ -39,7 +39,7 @@
 || Go tests pass for all modified packages | Done |
 || Challenge scripts verified working | Done (no_suspend_calls PASS; host_no_auto_suspend needs host hardening) |
 || Update CONTINUATION.md | Done — this file |
-|| Git commit | Pending |
+|| Git commit | Done — `17d7641` |
 || Push to all upstreams | Pending |
 
 ### Session 2026-05-08 #1 (previous)
@@ -265,7 +265,7 @@ When stopping work, the agent MUST:
 - [x] Update the **Current Priority Queue** if priorities shifted
 - [x] Add any new **Known Issues and Bugs** discovered during the session
 - [x] Update the **Last updated** date at the top of this file
-- [ ] Commit `docs/CONTINUATION.md` along with any other changes
+- [x] Commit `docs/CONTINUATION.md` along with any other changes
 - [ ] Push to all upstreams (`make upstream-push`)
 
 When starting work, the agent MUST:
