@@ -8,7 +8,7 @@
 > `CLAUDE.md` and `AGENTS.md`. Any agent continuing work MUST read this file
 > first and update it before stopping.
 >
-> **Last updated:** 2026-05-08 (session 10 — coverage expansion: adapter/engines/consumer/grpc/config/opa/kafka tests).
+> **Last updated:** 2026-05-08 (session 11 — auth handler tests, auth platform ContextWithUserID helper, coverage at 54 tested packages).
 
 ---
 
@@ -25,7 +25,18 @@
 
 ## Current Session State
 
-### Session 2026-05-08 #10 (this session)
+### Session 2026-05-08 #11 (this session)
+
+||| Item | Status ||
+|||------|--------||
+||| Added auth handler HTTP tests: JWKS empty keys, callback missing code, refresh no cookie, refresh invalid token | Done — 4 tests, 27.9% coverage ||
+||| Added auth handler gRPC tests: 13 tests covering all 11 methods — nil deps, no user context, unimplemented, invalid session ID | Done — 40.3% coverage ||
+||| Added auth platform ContextWithUserID helper for test injection | Done ||
+||| Full suite green (0 failures) | Done ||
+||| no_suspend_calls_challenge PASS | Done ||
+||| Updated CONTINUATION.md | Done ||
+
+### Session 2026-05-08 #10 (previous)
 
 ||| Item | Status ||
 |||------|--------||
@@ -183,9 +194,9 @@
 || Milestones tagged | M1–M8 (all tagged, all have plan files, **0 tasks checked**) |
 || Services wired end-to-end | 17 / 17 (all wired) |
 || Services scaffolded (17-line stubs) | 0 |
-|| Go packages with any tests | 54 / 98 |
+|| Go packages with any tests | 56 / 98 |
 || Go packages at 100% coverage | 20 / 98 |
-|| Go packages at 0% coverage | 26 / 98 |
+|| Go packages at 0% coverage | 24 / 98 |
 || Integration tests | 9 (need env vars + compose stack: 4 vault, 3 pg, 1 telemetry, 2 redis) |
 || E2E suites wired to cluster | 0 |
 || Constitution-mandated test types with real tests | 3 / 7 (unit, integration runner, security runner shell) |
