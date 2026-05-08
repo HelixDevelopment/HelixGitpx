@@ -8,7 +8,7 @@
 > `CLAUDE.md` and `AGENTS.md`. Any agent continuing work MUST read this file
 > first and update it before stopping.
 >
-> **Last updated:** 2026-05-08 (session 11 — auth handler tests, auth platform ContextWithUserID helper, coverage at 54 tested packages).
+> **Last updated:** 2026-05-08 (session 12 — repo integration tests, platform coverage improvements, 30 new tests).
 
 ---
 
@@ -25,7 +25,20 @@
 
 ## Current Session State
 
-### Session 2026-05-08 #11 (this session)
+### Session 2026-05-08 #12 (this session)
+
+||| Item | Status ||
+|||------|--------||
+||| hello/repo integration tests: counter_pg (3), cache_redis (2), event_outbox (3) — 8 tests against live Postgres/Redis | Done — all PASS ||
+||| auth/repo integration tests: users_pg (4), sessions_pg (3), pats_pg (3), mfa_pg (2) — 12 tests against live Postgres | Done — all PASS ||
+||| platform/audit emitter integration tests: Emit inserts outbox row, EmitInTx within transaction, NilPool panics — 3 tests | Done — all PASS ||
+||| platform/log expanded tests: Warn/Error output, Debug filtered at Info, Debug visible, FromContext missing, Default noop, With fields, DefaultOutput, ParseLevel warning alias — 9 new tests (11 total) | Done — all PASS ||
+||| platform/quota expanded tests: ZeroLimit, ConcurrentNoRace (2000 goroutines), RefillRestoresCapacity, MultipleKeysExhaustIndependently — 4 new tests (7 total) | Done — all PASS ||
+||| Full suite green (platform 18/18, services 90+, tools 1) | Done ||
+||| no_suspend_calls_challenge PASS | Done ||
+||| Updated CONTINUATION.md | Done ||
+
+### Session 2026-05-08 #11 (previous)
 
 ||| Item | Status ||
 |||------|--------||
