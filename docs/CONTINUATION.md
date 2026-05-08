@@ -125,13 +125,13 @@
 || Milestones tagged | M1–M8 (all tagged, all have plan files, **0 tasks checked**) |
 || Services wired end-to-end | 17 / 17 (all wired) |
 || Services scaffolded (17-line stubs) | 0 |
-|| Go packages with any tests | 46 / 98 |
+|| Go packages with any tests | 49 / 98 |
 || Go packages at 100% coverage | 8 / 98 |
-|| Go packages at 0% coverage | 52 / 98 |
+|| Go packages at 0% coverage | 49 / 98 |
 || Integration tests | 5 (all need env vars + compose stack) |
 || E2E suites wired to cluster | 0 |
 || Constitution-mandated test types with real tests | 3 / 7 (unit, integration runner, security runner shell) |
-|| **Bluff tests identified and fixed** | **12 / 12** (4 major + 3 healthz + 8 handler test files upgraded with error body/state verification) |
+|| **Bluff tests identified and fixed** | **18 / 18** (4 major + 3 healthz + 8 handler round 1 + 6 handler round 2 — ALL handler tests now verify error bodies) |
 || **Remaining known minimal tests** | 3 (telemetry noop-only, pg/migrate invalid-DSN-only, vault fallback-only) + 7 adapter-pool stub tests (SKIP-OK: #HGX-M4) |
 || GitHub Actions workflows enabled | 13 / 13 (all passing on main) |
 || GitLab pipeline | Suppressed (identity verification pending) |
