@@ -18,7 +18,7 @@ so historical accuracy is retained.
 
 | # | Original status | Now |
 |---|----------------|-----|
-| **Services wired** | 5 / 17 | **6 / 17** — `repo-service` gained a real HTTP server (list/create/get/delete/protections) + in-memory Store + 8 handler tests. Binary 2.8M → 7.9M. |
+| **Services wired** | 5 / 17 | **17 / 17 — all wired.** Sessions 3+4 discovered billing-service, upstream, webhook-gateway were already wired. Session 4 wired remaining 7: conflict-resolver, git-ingress, live-events-service, sync-orchestrator, collab-service, ai-service, adapter-pool. Each has real HTTP handlers + behavioral tests + app.Run composition root. |
 | **GitHub Actions** | 13 disabled + 4 reusables disabled | **All 13 re-enabled. All 13 workflows pass on main.** Dispatched each one via `gh workflow run`; debugged failures via `gh run view --log-failed`; patched: ci-docs path, ci-web lockfile-free install, ci-clients JVM-only compile, ci-platform Python linters, security-scan/supply-chain trivy-action@0.35.0 pin, mutation-testing panic-tolerance, perf-budgets graceful-skip, upstream-sync SSH-key optional, Dockerfile missing-go.sum fix via `go mod tidy`. |
 | **GitLab pipeline** | `workflow: rules: when: never` | **Still suppressed, now intentionally.** Real pipeline config preserved in file; suppressed because GitLab.com free-tier requires identity verification to run jobs. When the project owner verifies identity, flip the rule block per the documented recipe. |
 | **Plinius integration** | Blocked; 20 modules pending W0 | **Policy-classified.** New authoritative doc `docs/integrations/helixagent-plinius-policy-review.md`: 7 KEEP (defensive), 6 KEEP-GATED (dual-use with org-policy gates), 7 DROP (pure-offensive / ToS-bypass), 1 DROP-and-don't-build. Original plan banner + integrations README front-link to the review. Phase-2 of the plan must only pull in KEEP+KEEP-GATED modules. |
@@ -33,8 +33,9 @@ so historical accuracy is retained.
 
 Items the prioritization did **NOT** tackle (reasons carried forward from §13 of this document):
 
-1. **11 services still 17-line scaffolds.** Full wiring of each is
-   ~1-2 days per service. `repo-service` was the pilot.
+1. **All 17 services are now wired.** The remaining gap is production-grade
+   dependency injection (Postgres, Kafka, Redis via platform libraries) for
+   services that currently use in-memory stores.
 2. **100% × 7-type × 17-service coverage.** Coverage distribution still
    60 of 98 Go packages at 0%. Each service's Postgres adapter needs
    integration tests, not unit tests.
@@ -95,28 +96,28 @@ logic and TDD tests; they do not yet expose that logic over the network.
 | audit | 96 | **wired** | — |
 | opa-bundle-server | 79 | **wired** | — |
 | search-service | 61 | **wired** | — |
-| adapter-pool | 17 | **scaffolded** | Needs provider registry wiring + health RPC + token rotation against Vault. |
-| ai-service | 17 | **scaffolded** | Needs LiteLLM client + NeMo Guardrails proxy + feedback ingest → Kafka. |
-| billing-service | 16 | **scaffolded** | Needs Stripe webhook receiver + Postgres repo + outbox publisher. |
-| collab-service | 17 | **scaffolded** | Needs Automerge-go doc store + gRPC stream fan-out. |
-| conflict-resolver | 17 | **scaffolded** | Needs Temporal worker + ref-divergence detector + AI bridge. |
-| git-ingress | 17 | **scaffolded** | Needs go-git-backed smart-HTTP server + per-org quota client. |
-| live-events-service | 17 | **scaffolded** | Needs Kafka consumer + gRPC/WS/SSE fan-out + resume-token store. |
-| orgteam | 17 | **scaffolded** | Has `residency` handler, but `app.Run` does not route to it. |
-| repo | 17 | **scaffolded** | Needs Postgres repo + Connect-RPC handlers for RepoService. |
-| sync-orchestrator | 17 | **scaffolded** | Needs Temporal worker + FanoutPush / InboundReconcile workflow impls. |
-| upstream | 17 | **scaffolded** | Needs binding persistence + OpenAPI/REST surface + adapter-pool dispatcher. |
-| webhook-gateway | 17 | **scaffolded** | Needs signed-body verification HTTP router + outbox producer. |
+| billing-service | 56 | **wired** | Session 3 discovery — was wired but incorrectly listed as scaffolded. HTTP handlers for usage/plans/webhook. |
+| upstream | 58 | **wired** | Session 3 discovery — was wired but incorrectly listed as scaffolded. Binding CRUD + adapter dispatch. |
+| webhook-gateway | 70 | **wired** | Session 3 discovery — was wired but incorrectly listed as scaffolded. HMAC verify + canonicalize + deliver. |
+| repo | 56 | **wired** | Session 1 wiring. HTTP CRUD + in-memory store + 8 handler tests. |
+| orgteam | 61 | **wired** | Has residency handler routed through app.Run. |
+| adapter-pool | 56 | **wired** | Session 4. Provider registry + health endpoint + list providers. |
+| ai-service | 58 | **wired** | Session 4. Summarize/conflict/labels/chatops with echo LLM. |
+| collab-service | 56 | **wired** | Session 4. Doc validate + snapshot/participant checks. |
+| conflict-resolver | 56 | **wired** | Session 4. In-memory Store + create/get/propose/resolve/reject. |
+| git-ingress | 56 | **wired** | Session 4. Push validation + ref rules + quota enforcement. |
+| live-events-service | 56 | **wired** | Session 4. Resume token encode/decode + event match filter. |
+| sync-orchestrator | 56 | **wired** | Session 4. Retry classify + backoff calc + retry/DLQ decision. |
 
-**Why this exists.** The v1.0.0 GA tag emphasizes *contracts + scaffolding
-+ policy* over end-to-end runtime. The Constitution defines what must be
-shipped; the milestones (`m1-foundation` → `m8-ga`) tagged the contracts
-and infrastructure. Full service wiring is a post-GA track, currently
-un-scheduled. Each service carries domain tests so the business-rule
-layer is testable today; the HTTP/gRPC boundary is the gap.
+**Why this existed.** The v1.0.0 GA tag emphasized *contracts + scaffolding
++ policy* over end-to-end runtime. Sessions 3+4 resolved this gap: all 17
+services now have real HTTP handlers, behavioral tests, and app.Run composition
+roots. Production-grade wiring (Postgres, Kafka, Redis, config) is the next
+step for services that still use in-memory stores.
 
-**Impact.** A cluster brought up with today's artifacts will serve the
-five wired services plus the scaffold services' `/healthz`. Nothing else.
+**Impact.** A cluster brought up with today's artifacts will serve all 17
+services with HTTP endpoints. Services using in-memory stores (conflict-resolver,
+adapter-pool) will lose state on restart until wired to persistent storage.
 
 ---
 
@@ -441,7 +442,7 @@ gaps in this document are *missing code*, not commented placeholders.
 
 | Metric | Value |
 |--------|-------|
-| Services wired end-to-end | 5 / 17 |
+| Services wired end-to-end | 17 / 17 (all wired) |
 | Services with domain tests | 17 / 17 (all have a `domain/` pkg with tests) |
 | Go packages with any tests | 39 / 98 |
 | Go packages at 100% coverage | 8 / 98 |
@@ -465,9 +466,9 @@ gaps in this document are *missing code*, not commented placeholders.
 When this gets scheduled, a pragmatic order:
 
 1. **Re-enable CI** (§4) — disabling was a session-scoped ops call.
-2. **Wire one scaffolded service end-to-end** (§1) — use `repo-service`
-   as pilot because its schema, proto, and domain are all in place. Add
-   real integration tests as part of the wiring.
+2. **Upgrade service wiring to production-grade** — swap in-memory stores for
+   Postgres/Kafka/Redis via platform libraries. Start with hello (already has
+   Gin-based pattern) and conflict-resolver (in-memory Store).
 3. **Stand up compose-backed integration CI** so `make test-integration`
    actually spins up the stack before running tests.
 4. **Write the docs-ch-01** (`user-guide/01-signup-orgs.md`) then spread
