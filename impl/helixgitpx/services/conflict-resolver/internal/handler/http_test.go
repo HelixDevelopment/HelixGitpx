@@ -52,6 +52,38 @@ func TestCreateConflict_NoSignal(t *testing.T) {
 	if resp.StatusCode != 400 {
 		t.Fatalf("want 400 got %d", resp.StatusCode)
 	}
+	var errBody struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if errBody.Code != "no_conflict" {
+		t.Fatalf("want code=no_conflict got %q", errBody.Code)
+	}
+}
+
+func TestCreateConflict_InvalidJSON(t *testing.T) {
+	srv := setup(t)
+	resp, err := http.Post(srv.URL+"/v1/conflicts", "application/json",
+		strings.NewReader(`{bad`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 400 {
+		t.Fatalf("want 400 got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if errBody.Code != "invalid_json" {
+		t.Fatalf("want code=invalid_json got %q", errBody.Code)
+	}
 }
 
 func TestGetConflict(t *testing.T) {
@@ -87,6 +119,16 @@ func TestGetConflict_NotFound(t *testing.T) {
 	if resp.StatusCode != 404 {
 		t.Fatalf("want 404 got %d", resp.StatusCode)
 	}
+	var errBody struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if errBody.Code != "not_found" {
+		t.Fatalf("want code=not_found got %q", errBody.Code)
+	}
 }
 
 func TestProposeAndResolve(t *testing.T) {
@@ -106,6 +148,15 @@ func TestProposeAndResolve(t *testing.T) {
 	if resp2.StatusCode != 200 {
 		t.Fatalf("propose: want 200 got %d", resp2.StatusCode)
 	}
+	var proposeResult struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp2.Body).Decode(&proposeResult); err != nil {
+		t.Fatalf("decode propose: %v", err)
+	}
+	if proposeResult.Status != "proposed" {
+		t.Fatalf("propose: want status=proposed got %q", proposeResult.Status)
+	}
 
 	resp3, err := http.Post(srv.URL+"/v1/conflicts/"+created.ID+"/resolve", "application/json",
 		strings.NewReader(`{"rationale":"merged"}`))
@@ -115,6 +166,23 @@ func TestProposeAndResolve(t *testing.T) {
 	defer resp3.Body.Close()
 	if resp3.StatusCode != 200 {
 		t.Fatalf("resolve: want 200 got %d", resp3.StatusCode)
+	}
+	var resolveResult struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp3.Body).Decode(&resolveResult); err != nil {
+		t.Fatalf("decode resolve: %v", err)
+	}
+	if resolveResult.Status != "resolved" {
+		t.Fatalf("resolve: want status=resolved got %q", resolveResult.Status)
+	}
+
+	resp4, _ := http.Get(srv.URL + "/v1/conflicts/" + created.ID)
+	defer resp4.Body.Close()
+	var afterResolve conflictOut
+	_ = json.NewDecoder(resp4.Body).Decode(&afterResolve)
+	if afterResolve.Status != "resolved" {
+		t.Fatalf("after resolve: want status=resolved got %q", afterResolve.Status)
 	}
 }
 
@@ -175,6 +243,42 @@ func TestReject(t *testing.T) {
 	defer resp2.Body.Close()
 	if resp2.StatusCode != 200 {
 		t.Fatalf("reject: want 200 got %d", resp2.StatusCode)
+	}
+	var rejectResult struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp2.Body).Decode(&rejectResult); err != nil {
+		t.Fatalf("decode reject: %v", err)
+	}
+	if rejectResult.Status != "rejected" {
+		t.Fatalf("reject: want status=rejected got %q", rejectResult.Status)
+	}
+
+	resp3, _ := http.Get(srv.URL + "/v1/conflicts/" + created.ID)
+	defer resp3.Body.Close()
+	var afterReject conflictOut
+	_ = json.NewDecoder(resp3.Body).Decode(&afterReject)
+	if afterReject.Status != "rejected" {
+		t.Fatalf("after reject: want status=rejected got %q", afterReject.Status)
+	}
+}
+
+func TestReject_WithoutProposal(t *testing.T) {
+	srv := setup(t)
+	resp, _ := http.Post(srv.URL+"/v1/conflicts", "application/json",
+		strings.NewReader(`{"repo_id":"r-1","refs_diverge":true}`))
+	defer resp.Body.Close()
+	var created conflictOut
+	_ = json.NewDecoder(resp.Body).Decode(&created)
+
+	resp2, err := http.Post(srv.URL+"/v1/conflicts/"+created.ID+"/reject", "application/json",
+		strings.NewReader(`{"rationale":"nope"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != 400 {
+		t.Fatalf("want 400 for reject-without-propose got %d", resp2.StatusCode)
 	}
 }
 

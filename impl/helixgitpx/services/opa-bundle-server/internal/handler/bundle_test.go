@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -46,6 +47,19 @@ func TestGetActive_ReturnsContentAndETag(t *testing.T) {
 	if resp.Header.Get("X-Bundle-Version") != "2.0.0" {
 		t.Fatal("version header missing")
 	}
+	if resp.Header.Get("X-Bundle-Id") != "b-1" {
+		t.Fatalf("want X-Bundle-Id=b-1 got %q", resp.Header.Get("X-Bundle-Id"))
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/vnd.openpolicyagent.bundles" {
+		t.Fatalf("want content-type application/vnd.openpolicyagent.bundles got %q", ct)
+	}
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "fake bundle bytes" {
+		t.Fatalf("want body 'fake bundle bytes' got %q", string(content))
+	}
 }
 
 func TestGetActive_NotModifiedWhenETagMatches(t *testing.T) {
@@ -87,6 +101,27 @@ func TestList(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
 	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("want application/json got %q", ct)
+	}
+	var body struct {
+		Bundles []map[string]any `json:"bundles"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if len(body.Bundles) != 1 {
+		t.Fatalf("want 1 bundle got %d", len(body.Bundles))
+	}
+	if body.Bundles[0]["id"] != "b-1" {
+		t.Fatalf("want id=b-1 got %v", body.Bundles[0]["id"])
+	}
+	if body.Bundles[0]["version"] != "2.0.0" {
+		t.Fatalf("want version=2.0.0 got %v", body.Bundles[0]["version"])
+	}
+	if body.Bundles[0]["active"] != true {
+		t.Fatalf("want active=true got %v", body.Bundles[0]["active"])
+	}
 }
 
 func TestGetOne(t *testing.T) {
@@ -98,6 +133,16 @@ func TestGetOne(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200 got %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/vnd.openpolicyagent.bundles" {
+		t.Fatalf("want content-type application/vnd.openpolicyagent.bundles got %q", ct)
+	}
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "fake bundle bytes" {
+		t.Fatalf("want body 'fake bundle bytes' got %q", string(content))
 	}
 
 	resp404, err404 := http.Get(srv.URL + "/bundles/bogus")

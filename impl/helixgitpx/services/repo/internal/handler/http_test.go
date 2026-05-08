@@ -110,6 +110,38 @@ func TestCreate_Rejects400(t *testing.T) {
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("want 400 got %d", resp.StatusCode)
 	}
+	var errBody struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "missing_fields" {
+		t.Fatalf("want code=missing_fields got %q", errBody.Code)
+	}
+}
+
+func TestCreate_InvalidJSON(t *testing.T) {
+	srv, _ := setup(t)
+	resp, err := http.Post(srv.URL+"/v1/repos", "application/json",
+		strings.NewReader(`{bad`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400 got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "invalid_json" {
+		t.Fatalf("want code=invalid_json got %q", errBody.Code)
+	}
 }
 
 func TestList_FiltersByOrg(t *testing.T) {
@@ -141,6 +173,15 @@ func TestGet_404(t *testing.T) {
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("want 404 got %d", resp.StatusCode)
 	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "not_found" {
+		t.Fatalf("want code=not_found got %q", errBody.Code)
+	}
 }
 
 func TestDelete(t *testing.T) {
@@ -155,6 +196,38 @@ func TestDelete(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("want 204 got %d", resp.StatusCode)
+	}
+
+	// verify deleted: GET should return 404
+	get, getErr := http.Get(srv.URL + "/v1/repos/" + r.ID)
+	if getErr != nil {
+		t.Fatal(getErr)
+	}
+	defer get.Body.Close()
+	if get.StatusCode != http.StatusNotFound {
+		t.Fatalf("after delete, want 404 got %d", get.StatusCode)
+	}
+}
+
+func TestDelete_404(t *testing.T) {
+	srv, _ := setup(t)
+	req, _ := http.NewRequest(http.MethodDelete, srv.URL+"/v1/repos/does-not-exist", nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("want 404 got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "not_found" {
+		t.Fatalf("want code=not_found got %q", errBody.Code)
 	}
 }
 
@@ -179,8 +252,11 @@ func TestAddProtection(t *testing.T) {
 		Protections []domain.Protection
 	}
 	_ = json.NewDecoder(list.Body).Decode(&body)
-	if len(body.Protections) != 1 || body.Protections[0].RequiredReviewers != 2 {
-		t.Fatalf("protections not persisted: %+v", body.Protections)
+	if body.Protections[0].Pattern != "refs/heads/main" {
+		t.Fatalf("want pattern=refs/heads/main got %q", body.Protections[0].Pattern)
+	}
+	if !body.Protections[0].RequireSigned {
+		t.Fatal("want require_signed=true")
 	}
 }
 
@@ -195,6 +271,38 @@ func TestAddProtection_RejectsNegativeReviewers(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("want 400 got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "bad_reviewers" {
+		t.Fatalf("want code=bad_reviewers got %q", errBody.Code)
+	}
+}
+
+func TestAddProtection_RejectsEmptyPattern(t *testing.T) {
+	srv, s := setup(t)
+	r, _ := s.Create(context.Background(), domain.Repo{OrgID: "o", Slug: "o/r"})
+	resp, err := http.Post(srv.URL+"/v1/repos/"+r.ID+"/protections", "application/json",
+		strings.NewReader(`{"pattern":"  ","required_reviewers":0}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400 got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "missing_pattern" {
+		t.Fatalf("want code=missing_pattern got %q", errBody.Code)
 	}
 }
 
