@@ -5,7 +5,7 @@
 > Subordinate documents (`CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, specs)
 > may refine but never contradict these rules.
 >
-> **Version:** 1.0.0 · **Ratified:** 2026-04-20 · **Author:** Милош Васић
+> **Version:** 1.1.0 · **Ratified:** 2026-04-20 · **Amended:** 2026-05-08 (CONST-035) · **Author:** Милош Васић
 > (@milos85vasic).
 
 ---
@@ -389,4 +389,76 @@ is the project's memory across all interruptions.
 `AGENTS.md`. All three files must contain a reference to CONST-034.
 
 <!-- END continuation-document addendum (CONST-034) -->
+
+<!-- BEGIN anti-bluff addendum (CONST-035) -->
+
+### CONST-035 — Tests and Challenges Must Prove Real Functionality (Anti-Bluff)
+
+**Status:** Mandatory. Non-negotiable. Applies to every test, every
+challenge script, and every verification artifact in this repository
+and all submodules.
+
+**Rule:** A passing test suite MUST guarantee that the tested features
+actually work as expected by real end users. A test that passes
+regardless of whether the feature works — or that exercises only
+trivially true assertions — is a **bluff test** and is **forbidden**.
+
+**Definition of a bluff test (non-exhaustive):**
+
+1. **Tautological assertions.** `expect(true).toBe(true)`,
+   `assert 1 == 1`, `if true { }`, or any assertion that cannot fail.
+2. **Healthz-only integration tests.** Hitting only `/healthz` and
+   asserting 200 OK does NOT prove the service's actual business logic
+   works. The integration test MUST exercise at least one real business
+   endpoint and verify the response semantics (not just the status code).
+3. **Grep-only challenges.** A challenge script that only greps for
+   strings in source files does NOT prove the code runs correctly.
+   Challenges MUST execute the real binary, make real HTTP/gRPC calls,
+   or otherwise exercise the runtime behavior.
+4. **Stub-method tests.** Testing a method that returns a hardcoded
+   value without exercising any real logic. The test must verify
+   behavior that would break if the implementation were wrong.
+5. **Always-skip conditionals.** Tests or challenges that skip
+   unconditionally (e.g. every test has `test.skip()` because the
+   prerequisite is never met in practice). If the prerequisite is never
+   available, the test must be written differently or the feature is
+   not testable and must not be claimed as done.
+6. **Status-code-only assertions.** An integration or e2e test that
+   only checks HTTP status codes without verifying response body
+   content, side effects, or state changes.
+7. **Self-referential assertions.** Tests that verify the test
+   infrastructure itself (module loads, syntax compiles) rather than
+   the subject under test.
+
+**Mandatory verification properties for every test:**
+
+- **Behavioral assertion.** Every test MUST assert at least one
+  property of the *output or state change* that would be wrong if the
+  implementation were buggy.
+- **Failure sensitivity.** It must be possible for the test to fail
+  if the feature is broken. If a mutant (single-line change) in the
+  implementation cannot cause the test to fail, the test is a bluff.
+- **End-user relevance.** The test must verify something a real user
+  would notice — a correct response body, a state change in the
+  database, an event published, a file created, etc.
+
+**Enforcement:**
+
+1. Every new test file MUST pass the anti-bluff review: can it fail?
+   Does it verify real behavior?
+2. Existing bluff tests MUST be replaced with real behavioral tests
+   or clearly documented as `SKIP-OK: #<ticket>` with a justification
+   for why the feature cannot be tested yet.
+3. Challenge scripts MUST exercise runtime behavior, not just source
+   code presence or syntax.
+4. This rule cascades to all submodules, sub-projects, and sibling
+   repositories via their respective governance documents.
+
+**Why:** This project experienced a state where all tests executed with
+success and all challenges passed, but the majority of features did
+not work and could not be used by end users. Tests gave false
+confidence. This rule ensures that a green test run is a trustworthy
+signal of real product quality.
+
+<!-- END anti-bluff addendum (CONST-035) -->
 

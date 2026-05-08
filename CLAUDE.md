@@ -245,3 +245,25 @@ Per CONST-034 in the Constitution, the file `docs/CONTINUATION.md` is
 
 <!-- END continuation-document addendum (CONST-034) -->
 
+<!-- BEGIN anti-bluff addendum (CONST-035) -->
+
+## Tests and Challenges Must Prove Real Functionality (CONST-035)
+
+**CONST-035 (Anti-Bluff)**: A passing test suite MUST guarantee that the
+tested features actually work for real end users. Bluff tests —
+tautological assertions (`expect(true).toBe(true)`), healthz-only
+integration tests, grep-only challenges, stub-method tests, and
+status-code-only assertions — are **forbidden**.
+
+Every test MUST:
+- Assert at least one behavioral property that would fail if the
+  implementation were wrong.
+- Verify something a real user would notice (correct response body,
+  state change, event published, file created).
+- Be capable of failing (if no mutant in the implementation could
+  cause the test to fail, the test is a bluff).
+
+See CONST-035 in `CONSTITUTION.md` for the full rule and rationale.
+
+<!-- END anti-bluff addendum (CONST-035) -->
+

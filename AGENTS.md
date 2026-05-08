@@ -665,3 +665,37 @@ mandatory session handoff document. Rules:
 If `docs/CONTINUATION.md` does not exist, create it as the first action.
 
 <!-- END continuation-document addendum (CONST-034) -->
+
+<!-- BEGIN anti-bluff addendum (CONST-035) -->
+
+## Anti-Bluff — Tests Must Prove Real Functionality (CONST-035)
+
+Per CONST-035 in the Constitution, **a passing test suite MUST guarantee
+that the tested features actually work for real end users.** Bluff tests
+are forbidden. A bluff test is one that passes regardless of whether the
+feature works.
+
+**Forbidden patterns:**
+
+- Tautological assertions (`expect(true).toBe(true)`, `assert 1 == 1`).
+- Healthz-only integration tests (must exercise at least one real
+  business endpoint and verify response semantics).
+- Grep-only challenges (must execute runtime behavior).
+- Stub-method tests on hardcoded returns (must verify behavior that
+  breaks when the implementation is wrong).
+- Always-skip conditionals (if the prerequisite is never met, the
+  test is a bluff).
+- Status-code-only assertions without body/state verification.
+
+**Every test MUST:**
+
+1. Assert at least one behavioral property that would fail if the
+   implementation were buggy.
+2. Verify something a real user would notice.
+3. Be capable of failing — if no code change could make it fail,
+   it is a bluff.
+
+This rule applies to all submodules, sub-projects, and sibling
+repositories. See CONST-035 in `CONSTITUTION.md` for the full rule.
+
+<!-- END anti-bluff addendum (CONST-035) -->
