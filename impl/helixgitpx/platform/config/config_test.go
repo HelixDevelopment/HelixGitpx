@@ -68,3 +68,117 @@ func TestLoad_RequiredFieldMissing(t *testing.T) {
 		t.Fatalf("expected error for missing required DSN")
 	}
 }
+
+func TestLoad_NotAPointer(t *testing.T) {
+	err := config.Load("not a struct", config.Options{})
+	if err == nil {
+		t.Fatal("expected error for non-pointer input")
+	}
+}
+
+func TestLoad_UintField(t *testing.T) {
+	type cfg struct {
+		Port uint `env:"PORT" default:"8080"`
+	}
+	var c cfg
+	if err := config.Load(&c, config.Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if c.Port != 8080 {
+		t.Errorf("Port = %d, want 8080", c.Port)
+	}
+}
+
+func TestLoad_FloatField(t *testing.T) {
+	type cfg struct {
+		Ratio float64 `env:"RATIO" default:"1.5"`
+	}
+	var c cfg
+	if err := config.Load(&c, config.Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if c.Ratio != 1.5 {
+		t.Errorf("Ratio = %f, want 1.5", c.Ratio)
+	}
+}
+
+func TestLoad_EmbeddedStruct(t *testing.T) {
+	type Inner struct {
+		Val string `env:"INNER_VAL" default:"ok"`
+	}
+	type Outer struct {
+		Inner
+		Top string `env:"TOP" default:"yes"`
+	}
+	var c Outer
+	if err := config.Load(&c, config.Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if c.Val != "ok" {
+		t.Errorf("embedded Val = %q, want ok", c.Val)
+	}
+	if c.Top != "yes" {
+		t.Errorf("Top = %q, want yes", c.Top)
+	}
+}
+
+func TestLoad_BoolParseError(t *testing.T) {
+	type cfg struct {
+		Flag bool `env:"FLAG"`
+	}
+	t.Setenv("FLAG", "notabool")
+	var c cfg
+	err := config.Load(&c, config.Options{})
+	if err == nil {
+		t.Fatal("expected parse error for invalid bool")
+	}
+}
+
+func TestLoad_IntParseError(t *testing.T) {
+	type cfg struct {
+		N int `env:"N"`
+	}
+	t.Setenv("N", "abc")
+	var c cfg
+	err := config.Load(&c, config.Options{})
+	if err == nil {
+		t.Fatal("expected parse error for invalid int")
+	}
+}
+
+func TestLoad_DurationParseError(t *testing.T) {
+	type cfg struct {
+		D time.Duration `env:"D"`
+	}
+	t.Setenv("D", "notaduration")
+	var c cfg
+	err := config.Load(&c, config.Options{})
+	if err == nil {
+		t.Fatal("expected parse error for invalid duration")
+	}
+}
+
+func TestLoad_UnsupportedKind(t *testing.T) {
+	type cfg struct {
+		M map[string]string `env:"M" default:"x"`
+	}
+	var c cfg
+	err := config.Load(&c, config.Options{})
+	if err == nil {
+		t.Fatal("expected unsupported kind error")
+	}
+}
+
+func TestLoad_EnvOverridesUint(t *testing.T) {
+	type cfg struct {
+		Port uint `env:"PORT" default:"8080"`
+	}
+	t.Setenv("PORT", "9090")
+	var c cfg
+	if err := config.Load(&c, config.Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if c.Port != 9090 {
+		t.Errorf("Port = %d, want 9090", c.Port)
+	}
+}

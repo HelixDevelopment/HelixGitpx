@@ -70,3 +70,60 @@ func TestKarapaceClient_Resolve_Error(t *testing.T) {
 		t.Fatal("expected error on 404")
 	}
 }
+
+func TestKarapaceClient_Resolve_DecodeError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(`not json`))
+	}))
+	defer srv.Close()
+
+	k := &kafka.KarapaceClient{URL: srv.URL, Client: srv.Client()}
+	_, err := k.Resolve(context.Background(), "topic", 1)
+	if err == nil {
+		t.Fatal("expected decode error for non-JSON response")
+	}
+}
+
+func TestKarapaceClient_NilClient_DefaultsToDefaultClient(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"id":99,"version":1}`))
+	}))
+	defer srv.Close()
+
+	k := &kafka.KarapaceClient{URL: srv.URL}
+	id, err := k.Resolve(context.Background(), "topic", 1)
+	if err != nil {
+		t.Fatalf("nil Client should use DefaultClient: %v", err)
+	}
+	if id != 99 {
+		t.Errorf("id = %d, want 99", id)
+	}
+}
+
+func TestProducer_Close_NilReceiver(t *testing.T) {
+	var p *kafka.Producer
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("nil receiver Close should not error: %v", err)
+	}
+}
+
+func TestProducer_Close_NilClient(t *testing.T) {
+	p := &kafka.Producer{}
+	if err := p.Close(context.Background()); err != nil {
+		t.Fatalf("nil client Close should not error: %v", err)
+	}
+}
+
+func TestProducer_Emit_TopicUnset(t *testing.T) {
+	// Producer constructed without a real client, only testing the topic-unset guard.
+	// The private field 'cl' is nil but the topic check happens first.
+	p := &kafka.Producer{ /* topic empty by default */ }
+	err := p.Emit(context.Background(), nil, nil)
+	if err == nil {
+		t.Fatal("expected error for unset topic")
+	}
+	if err.Error() != "kafka: topic unset" {
+		t.Errorf("err = %q, want %q", err.Error(), "kafka: topic unset")
+	}
+}

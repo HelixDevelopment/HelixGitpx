@@ -1,9 +1,12 @@
 package consumer
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 func TestRawEvent_JSONDecode(t *testing.T) {
@@ -92,5 +95,54 @@ func TestRawEvent_DetailsRoundTrip(t *testing.T) {
 	}
 	if !decoded.At.Equal(original.At) {
 		t.Errorf("At round-trip: got %v, want %v", decoded.At, original.At)
+	}
+}
+
+func TestHandle_InvalidJSON(t *testing.T) {
+	c := &Consumer{}
+	rec := &kgo.Record{Value: []byte(`{invalid`)}
+	err := c.handle(context.Background(), rec)
+	if err == nil {
+		t.Fatal("expected error for invalid JSON")
+	}
+}
+
+func TestHandle_EmptyValue(t *testing.T) {
+	c := &Consumer{}
+	rec := &kgo.Record{Value: []byte(``)}
+	err := c.handle(context.Background(), rec)
+	if err == nil {
+		t.Fatal("expected error for empty value")
+	}
+}
+
+func TestHandle_NilDetails(t *testing.T) {
+	ev := rawEvent{
+		At:      time.Now(),
+		Action:  "repo.push",
+		Target:  "org/repo",
+		Details: nil,
+	}
+	data, _ := json.Marshal(ev)
+	if len(data) == 0 {
+		t.Fatal("marshal produced empty data")
+	}
+
+	var decoded rawEvent
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("re-unmarshal: %v", err)
+	}
+	if decoded.Details != nil {
+		t.Errorf("Details should be nil after round-trip, got %v", decoded.Details)
+	}
+}
+
+func TestConsumer_StructFields(t *testing.T) {
+	c := &Consumer{}
+	if c.Client != nil {
+		t.Error("nil Consumer should have nil Client")
+	}
+	if c.Pool != nil {
+		t.Error("nil Consumer should have nil Pool")
 	}
 }
