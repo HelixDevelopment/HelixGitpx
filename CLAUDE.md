@@ -228,3 +228,20 @@ Both must PASS.
 
 <!-- END host-power-management addendum (CONST-033) -->
 
+<!-- BEGIN continuation-document addendum (CONST-034) -->
+
+## Continuation Document — Mandatory (CONST-034)
+
+Per CONST-034 in the Constitution, the file `docs/CONTINUATION.md` is
+**mandatory and must never be out of sync with current work**.
+
+- Before any work session ends, update `docs/CONTINUATION.md` with what
+  was done, what changed, and what remains.
+- Before starting any work session, read `docs/CONTINUATION.md` first.
+- The document must be self-contained — any agent, any LLM, any CLI
+  tool must be able to resume work from it alone.
+- Commit the continuation document alongside any work changes, or
+  immediately after.
+
+<!-- END continuation-document addendum (CONST-034) -->
+

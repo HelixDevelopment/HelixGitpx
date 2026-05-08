@@ -347,3 +347,46 @@ runbook.
 
 <!-- END host-power-management addendum (CONST-033) -->
 
+<!-- BEGIN continuation-document addendum (CONST-034) -->
+
+### CONST-034 — Continuation Document is Mandatory
+
+**Status:** Mandatory. Non-negotiable. Applies to every work session,
+human or AI, in this repository.
+
+**Rule:** The file `docs/CONTINUATION.md` MUST exist and MUST be kept
+in sync with all current work. It is the single source of truth for
+resuming work across sessions, CLI agents, and LLM models.
+
+**Requirements:**
+
+1. **Created and maintained.** `docs/CONTINUATION.md` must exist at all
+   times. If it does not exist, the first action of any session is to
+   create it.
+2. **Updated before session ends.** Before any work session ends —
+   whether planned or interrupted — the document must be updated to
+   reflect: what was done, what changed, what remains, and the exact
+   next steps.
+3. **Never out of sync.** The document must never be out of sync with
+   current work. If work is performed, the document is updated in the
+   same commit or the very next commit.
+4. **Self-contained.** The document must contain enough context for any
+   agent, any LLM model, any CLI tool to pick up exactly where the
+   previous session left off — without requiring any other files or
+   prior conversation history.
+5. **Agent handoff.** Every agent starting work MUST read this document
+   first. Every agent stopping work MUST update it before stopping.
+6. **Nothing broken.** The document must never contain inaccurate or
+   misleading information. If something is uncertain, it must be marked
+   as such.
+
+**Why:** Sessions are lost. Context windows overflow. LLM models change.
+CLI agents restart. Without a maintained continuation document, work is
+duplicated, bugs are re-introduced, and progress is lost. The document
+is the project's memory across all interruptions.
+
+**Cross-references:** This rule is also enforced in `CLAUDE.md` and
+`AGENTS.md`. All three files must contain a reference to CONST-034.
+
+<!-- END continuation-document addendum (CONST-034) -->
+
