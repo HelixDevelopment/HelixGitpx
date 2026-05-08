@@ -35,6 +35,49 @@ func setup() http.Handler {
 	return r
 }
 
+func TestHelloGET_MissingName(t *testing.T) {
+	srv := httptest.NewServer(setup())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/v1/hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400 got %d", resp.StatusCode)
+	}
+	var body struct {
+		Error string `json:"error"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Error == "" {
+		t.Fatal("expected non-empty error message")
+	}
+}
+
+func TestHelloGET_GreetingContainsName(t *testing.T) {
+	srv := httptest.NewServer(setup())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/v1/hello?name=world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	var body struct {
+		Greeting string `json:"greeting"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Greeting != "hello, world" {
+		t.Fatalf("want greeting 'hello, world' got %q", body.Greeting)
+	}
+}
+
 func TestHelloGET_Happy(t *testing.T) {
 	srv := httptest.NewServer(setup())
 	defer srv.Close()

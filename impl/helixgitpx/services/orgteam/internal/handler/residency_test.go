@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -81,6 +82,15 @@ func TestResidency_NonOwnerIs403(t *testing.T) {
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("want 403, got %d", resp.StatusCode)
 	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "forbidden" {
+		t.Fatalf("want code=forbidden got %q", errBody.Code)
+	}
 }
 
 func TestResidency_InvalidZoneIs400(t *testing.T) {
@@ -93,6 +103,15 @@ func TestResidency_InvalidZoneIs400(t *testing.T) {
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("want 400, got %d", resp.StatusCode)
 	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "invalid_residency" {
+		t.Fatalf("want code=invalid_residency got %q", errBody.Code)
+	}
 }
 
 func TestResidency_UnauthenticatedIs401(t *testing.T) {
@@ -104,5 +123,77 @@ func TestResidency_UnauthenticatedIs401(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("want 401, got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "unauthenticated" {
+		t.Fatalf("want code=unauthenticated got %q", errBody.Code)
+	}
+}
+
+func TestResidency_InvalidJSON(t *testing.T) {
+	repo := &fakeRepo{owner: "alice"}
+	srv := setup(t, repo, "alice")
+	defer srv.Close()
+
+	resp := postJSON(t, srv, "/v1/orgs/o-1/residency", `{bad`)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400, got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "invalid_json" {
+		t.Fatalf("want code=invalid_json got %q", errBody.Code)
+	}
+}
+
+func TestResidency_OrgNotFoundIs404(t *testing.T) {
+	repo := &fakeRepo{ownerErr: errors.New("not found")}
+	srv := setup(t, repo, "alice")
+	defer srv.Close()
+
+	resp := postJSON(t, srv, "/v1/orgs/o-1/residency", `{"residency":"EU"}`)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("want 404, got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "org_not_found" {
+		t.Fatalf("want code=org_not_found got %q", errBody.Code)
+	}
+}
+
+func TestResidency_PersistFailedIs500(t *testing.T) {
+	repo := &fakeRepo{owner: "alice", saveErr: errors.New("db down")}
+	srv := setup(t, repo, "alice")
+	defer srv.Close()
+
+	resp := postJSON(t, srv, "/v1/orgs/o-1/residency", `{"residency":"EU"}`)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("want 500, got %d", resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "persist_failed" {
+		t.Fatalf("want code=persist_failed got %q", errBody.Code)
 	}
 }

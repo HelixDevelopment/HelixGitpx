@@ -17,6 +17,43 @@ func setup(t *testing.T) *httptest.Server {
 	return srv
 }
 
+func testInvalidJSON(t *testing.T, srv *httptest.Server, path string) {
+	t.Helper()
+	resp, err := http.Post(srv.URL+path, "application/json",
+		strings.NewReader(`{bad`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 400 {
+		t.Fatalf("%s: want 400 got %d", path, resp.StatusCode)
+	}
+	var errBody struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&errBody); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if errBody.Code != "invalid_json" {
+		t.Fatalf("%s: want code=invalid_json got %q", path, errBody.Code)
+	}
+}
+
+func TestEncode_InvalidJSON(t *testing.T) {
+	srv := setup(t)
+	testInvalidJSON(t, srv, "/v1/tokens/encode")
+}
+
+func TestDecode_InvalidJSON(t *testing.T) {
+	srv := setup(t)
+	testInvalidJSON(t, srv, "/v1/tokens/decode")
+}
+
+func TestMatch_InvalidJSON(t *testing.T) {
+	srv := setup(t)
+	testInvalidJSON(t, srv, "/v1/events/match")
+}
+
 func TestEncodeDecodeToken_RoundTrip(t *testing.T) {
 	srv := setup(t)
 	now := time.Now().Unix()
